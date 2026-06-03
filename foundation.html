@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pure 1 弱项特训</title>
+    <style>
+        :root {
+            --bg-color: #F8FAFC; /* 比主页略浅的背景，区分层级 */
+            --text-main: #0F172A;
+            --text-sub: #64748B;
+            --primary: #6366F1;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --success: #10B981;
+            --card-bg: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* 顶部导航栏 (固定在顶部) */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            padding: 20px 20px 10px 20px;
+            background: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            color: var(--text-main);
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            /* 增大点击区域 */
+            margin-left: -10px; 
+            padding-left: 10px;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        /* 整体进度概览卡片 */
+        .progress-section {
+            padding: 0 20px;
+            margin-top: 10px;
+            margin-bottom: 24px;
+            animation: fadeInDown 0.5s ease-out;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 25%; /* 模拟 1/4 的进度 */
+            background: linear-gradient(90deg, #6366F1, #8B5CF6);
+            border-radius: 4px;
+            transition: width 1s ease-in-out;
+        }
+
+        /* 章节列表 */
+        .chapter-list {
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 独立的章节练习卡片 */
+        .chapter-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #F1F5F9;
+            transition: transform 0.1s ease;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .chapter-card:active {
+            transform: scale(0.97);
+            background-color: #F8FAFC;
+        }
+
+        /* 依次延迟入场动画 */
+        .chapter-card:nth-child(1) { animation-delay: 0.1s; }
+        .chapter-card:nth-child(2) { animation-delay: 0.2s; }
+        .chapter-card:nth-child(3) { animation-delay: 0.3s; }
+
+        /* 卡片头部：标题 + 标签 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .chapter-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        .badge.urgent { background-color: #FEE2E2; color: var(--danger); }
+        .badge.warning { background-color: #FEF3C7; color: var(--warning); }
+        .badge.success { background-color: #D1FAE5; color: var(--success); }
+
+        /* 具体病灶描述 (给学生的反馈) */
+        .diagnosis-text {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            background-color: #F1F5F9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* 底部操作区 */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-count {
+            font-size: 13px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .action-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        /* 已完成卡片的样式覆盖 */
+        .chapter-card.completed {
+            opacity: 0.7;
+        }
+        .chapter-card.completed .action-btn {
+            background-color: #E2E8F0;
+            color: var(--text-sub);
+        }
+        .chapter-card.completed .diagnosis-text {
+            border-left-color: var(--success);
+        }
+
+        /* 动画定义 */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav-bar">
+        <a href="index.html" class="back-btn">‹</a>
+        <h1 class="page-title">Foundation 专属提分包</h1>
+    </nav>
+
+    <section class="progress-section">
+        <div class="progress-text">
+            <span>当前攻克进度</span>
+            <span style="color: var(--primary);">1 / 4 章</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill"></div>
+        </div>
+    </section>
+
+    <main class="chapter-list">
+        <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">数字四则运算 (Numbers)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：培养数感，提升计算效率
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-number-hero.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+          <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">分数化简 (Fractions)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：培养数感，提升计算效率
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-fraction-forest.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+            <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">坐标识别 (Coordinates)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：培养数感，提升计算效率
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-coordinate-starfield.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+          <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">简单方程 (Equation)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：认识未知数
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-equation-balance.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+          <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">代数式展开 (Expand)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：把乘在一起的变成加在一起
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-expand-lab.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+        <div class="chapter-card">
+            <div class="card-header">
+                <div class="chapter-title">因式合成 (Factorise)</div>
+                <div class="badge urgent">🔥 易错高频</div>
+            </div>
+            <div class="diagnosis-text">
+                系统诊断：把加在一起的变成乘在一起
+            </div>
+            <div class="card-footer">
+                <span class="task-count">共 5 道针对性练习</span>
+                <a href="U0-factor-factory.html" class="action-btn">立即攻克</a>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>天平密码 · 一元一次方程冒险</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --copper:#C47832;--copper-dk:#9A5A1E;--copper-lt:#FFF3E4;
+  --bronze:#8B6914;--bronze-lt:#FDF6E3;
+  --teal:#1A9E8F;--teal-lt:#E2F7F4;
+  --plum:#7B4EA0;--plum-lt:#F0E8F7;
+  --rose:#D94F6B;--rose-lt:#FDE6EB;
+  --sky:#3A8FD6;--sky-lt:#E3F0FB;
+  --bark:#2E1F0F;--bark-m:#6B5540;
+  --cream:#FFFCF5;--white:#FFFFFF;
+  --gold:#F2C94C;--green:#43A047;--green-lt:#E8F5E9;
+  --shadow-s:0 3px 16px rgba(46,31,15,.07);
+  --shadow-m:0 7px 28px rgba(46,31,15,.11);
+  --shadow-l:0 12px 44px rgba(46,31,15,.16);
+  --r:16px;--r-lg:22px;
+}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--bark);overflow-x:hidden;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.screen{display:none;min-height:100vh;flex-direction:column}.screen.active{display:flex}
+
+/* ============ WELCOME ============ */
+.welcome{align-items:center;justify-content:center;background:linear-gradient(155deg,#FFF3E4 0%,#FFE4C4 30%,#F5D0A0 60%,#E8BC7A 100%);position:relative;overflow:hidden;padding:40px 24px}
+.w-deco{position:absolute;border-radius:50%;opacity:.08}
+.w-box{position:relative;z-index:2;text-align:center;max-width:480px}
+.w-badge{display:inline-block;padding:6px 18px;border-radius:100px;background:rgba(196,120,50,.12);font-size:12px;font-weight:800;color:var(--copper-dk);letter-spacing:1.5px;margin-bottom:20px}
+.w-title{font-size:clamp(40px,10vw,68px);font-weight:900;line-height:1.08;color:var(--bark);margin-bottom:10px}
+.w-title em{font-style:normal;color:var(--copper)}
+.w-eq{display:inline-block;margin:8px 0 16px;font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--copper);letter-spacing:2px;animation:eqPulse 3s ease-in-out infinite}
+@keyframes eqPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+.w-sub{font-size:17px;color:var(--bark-m);font-weight:600;line-height:1.7;margin-bottom:36px}
+.w-sub small{display:block;font-size:13px;margin-top:6px;opacity:.55}
+.btn-go{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--copper),var(--copper-dk));color:#fff;border:none;padding:17px 46px;border-radius:100px;font-size:19px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 8px 28px rgba(196,120,50,.35);transition:all .3s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
+.btn-go:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(196,120,50,.45)}.btn-go:active{transform:scale(.97)}
+.btn-go::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);animation:shn 2.8s ease-in-out infinite}
+@keyframes shn{0%,70%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+
+/* ============ MAP ============ */
+.map-s{background:linear-gradient(180deg,var(--copper-lt) 0%,var(--cream) 100%);padding:0}
+.mt{padding:18px 22px;display:flex;align-items:center;justify-content:space-between}
+.mt-h{font-size:21px;font-weight:800}.mt-st{display:flex;align-items:center;gap:5px;background:var(--bronze-lt);padding:7px 14px;border-radius:100px;font-weight:800;color:var(--bronze);font-size:15px}
+.ml{flex:1;padding:6px 18px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.zc{background:var(--white);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-s);cursor:pointer;display:flex;align-items:center;gap:16px;border:2px solid transparent;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.zc:hover{transform:translateY(-2px);box-shadow:var(--shadow-m)}.zc:active{transform:scale(.98)}
+.zc.lk{opacity:.4;pointer-events:none;filter:grayscale(.3)}.zc.dn{border-color:var(--green)}.zc.nw{border-color:var(--copper);animation:zcP 2s ease-in-out infinite}
+@keyframes zcP{0%,100%{box-shadow:var(--shadow-s),0 0 0 0 rgba(196,120,50,.12)}50%{box-shadow:var(--shadow-s),0 0 0 8px rgba(196,120,50,.04)}}
+.zi{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;font-weight:800}
+.zb{flex:1}.zn{font-size:16px;font-weight:800;margin-bottom:2px}.zd{font-size:12px;color:var(--bark-m);font-weight:600}
+.zdots{display:flex;gap:4px;margin-top:7px}.zdt{width:9px;height:9px;border-radius:50%;background:#ddd;transition:.3s}.zdt.on{background:var(--gold)}.zdt.cu{background:var(--copper);animation:dp 1.4s ease-in-out infinite}
+@keyframes dp{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.zr{text-align:right;flex-shrink:0}.zsv{font-size:13px;font-weight:800;color:var(--bronze)}
+
+/* ============ GAME ============ */
+.game-s{background:var(--cream);padding:0}
+.gh{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:var(--white);box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.gh-b{background:none;border:none;font-size:15px;font-weight:700;color:var(--bark-m);cursor:pointer;font-family:inherit;padding:8px}
+.gh-z{font-size:13px;font-weight:800;color:var(--copper)}
+.gh-l{font-size:13px;font-weight:600;color:var(--bark-m)}
+.gbd{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 14px 20px;overflow-y:auto}
+.gds{display:flex;gap:9px;margin-bottom:12px}
+.gd{width:11px;height:11px;border-radius:50%;background:#ddd;transition:.4s cubic-bezier(.34,1.56,.64,1)}.gd.done{background:var(--green);transform:scale(1.1)}.gd.act{background:var(--copper);transform:scale(1.3);box-shadow:0 0 0 4px rgba(196,120,50,.18)}
+
+/* balance */
+.bal-wrap{width:100%;max-width:440px;margin-bottom:10px;position:relative}
+.bal-canvas{display:block;width:100%;touch-action:none}
+
+/* equation display */
+.eq-card{background:var(--white);border-radius:var(--r);padding:16px 24px;box-shadow:var(--shadow-s);text-align:center;max-width:440px;width:100%;margin-bottom:8px;position:relative;overflow:hidden}
+.eq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--copper),var(--gold),var(--copper))}
+.eq-label{font-size:11px;font-weight:700;color:var(--copper);letter-spacing:1px;margin-bottom:6px}
+.eq-text{font-family:'JetBrains Mono',monospace;font-size:clamp(26px,6vw,38px);font-weight:700;color:var(--bark);letter-spacing:1px}
+.eq-text .x-var{color:var(--copper);text-decoration:underline;text-decoration-color:rgba(196,120,50,.3);text-underline-offset:4px}
+
+/* step hint box */
+.step-box{background:var(--copper-lt);border:1.5px solid rgba(196,120,50,.15);border-radius:var(--r);padding:12px 18px;max-width:440px;width:100%;margin-bottom:12px;min-height:48px;display:flex;align-items:center;justify-content:center}
+.step-txt{font-size:13px;font-weight:700;color:var(--copper-dk);text-align:center;line-height:1.5}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:440px;width:100%}
+.ob{background:var(--white);border:2.5px solid #E8DFD0;border-radius:var(--r);padding:16px 12px;font-size:clamp(20px,5vw,28px);font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--bark);cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);text-align:center}
+.ob:hover{border-color:var(--copper);transform:translateY(-2px);box-shadow:var(--shadow-s)}.ob:active{transform:scale(.96)}
+.ob.ok{background:var(--green-lt);border-color:var(--green);color:#2E7D32;animation:okP .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes okP{0%{transform:scale(.9)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.ob.nope{animation:nSh .45s ease;opacity:.35;pointer-events:none}
+@keyframes nSh{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.ob.off{opacity:.3;pointer-events:none}
+
+.g-hint{margin-top:10px;font-size:13px;color:var(--copper-dk);font-weight:600;min-height:20px;max-width:440px;text-align:center;line-height:1.5}
+.streak-bx{position:fixed;top:72px;right:16px;background:linear-gradient(135deg,#E8A317,var(--gold));color:var(--bark);padding:8px 16px;border-radius:100px;font-weight:800;font-size:13px;box-shadow:var(--shadow-m);z-index:50;display:none}
+.streak-bx.on{display:block;animation:sbI .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sbI{0%{transform:translateX(80px) scale(.5);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+
+/* ============ RESULT ============ */
+.res-s{align-items:center;justify-content:center;background:linear-gradient(160deg,#FFF3E4 0%,#FFE4C4 50%,#F5D0A0 100%);padding:40px 24px;text-align:center;position:relative;overflow:hidden}
+.rs-st{display:flex;gap:12px;margin-bottom:22px}
+.rs{width:50px;height:50px;opacity:0;transform:scale(0) rotate(-25deg)}.rs.got{animation:sE .6s cubic-bezier(.34,1.56,.64,1) forwards}
+.rs:nth-child(2).got{animation-delay:.2s}.rs:nth-child(3).got{animation-delay:.4s}
+@keyframes sE{0%{opacity:0;transform:scale(0) rotate(-25deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.rs svg{width:100%;height:100%}
+.rs-t{font-size:28px;font-weight:900;margin-bottom:8px;animation:fU .6s ease .5s both}
+.rs-msg{font-size:15px;color:var(--bark-m);font-weight:600;margin-bottom:10px;animation:fU .6s ease .6s both;line-height:1.6}
+.rs-row{display:flex;gap:24px;margin:22px 0 32px;animation:fU .6s ease .7s both}
+.rv{font-size:24px;font-weight:900;color:var(--copper)}.rl{font-size:11px;color:var(--bark-m);font-weight:600}
+@keyframes fU{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.btn-n{background:linear-gradient(135deg,var(--copper),var(--copper-dk));color:#fff;border:none;padding:15px 42px;border-radius:100px;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 8px 28px rgba(196,120,50,.3);transition:all .3s;animation:fU .6s ease .8s both}
+.btn-n:hover{transform:translateY(-2px)}.btn-n:active{transform:scale(.97)}
+.btn-s2{background:transparent;color:var(--bark-m);border:2px solid #DDD0BE;padding:11px 28px;border-radius:100px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .3s;animation:fU .6s ease .9s both;margin-top:12px}
+.btn-s2:hover{border-color:var(--copper);color:var(--copper)}
+
+/* particles */
+.ptc-b{position:fixed;inset:0;pointer-events:none;z-index:1000;overflow:hidden}
+.ptc{position:absolute;border-radius:50%;animation:ptcF 1s ease-out forwards}
+@keyframes ptcF{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+.big-ok{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:88px;height:88px;z-index:999;pointer-events:none}
+.big-ok.go{animation:bP .8s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes bP{0%{transform:translate(-50%,-50%) scale(0);opacity:0}40%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-50%) scale(0);opacity:0}}
+
+@media(max-width:480px){.bal-wrap{max-width:360px}.eq-card{padding:14px 16px}.opts{gap:8px}.ob{padding:13px 8px}.step-box{padding:10px 14px}}
+</style>
+</head>
+<body>
+<div class="ptc-b" id="ptcB"></div>
+<div class="big-ok" id="bigOk"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#43A047"/><path d="M30 52L45 67L72 35" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+<!-- WELCOME -->
+<div class="screen welcome active" id="scnW">
+  <div class="w-deco" style="width:300px;height:300px;background:var(--copper);top:-80px;right:-80px"></div>
+  <div class="w-deco" style="width:200px;height:200px;background:var(--gold);bottom:-60px;left:-40px"></div>
+  <div class="w-box">
+    <div class="w-badge">U → E 阶段</div>
+    <h1 class="w-title">天平<em>密码</em></h1>
+    <div class="w-eq">x + 3 = 7 → x = ?</div>
+    <p class="w-sub">方程就像一架天平——两边必须一样重<small>每道题都有天平动画帮你理解，答错了也能看到解题过程</small></p>
+    <button class="btn-go" onclick="enterMap()">开始解密 →</button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="screen map-s" id="scnM">
+  <div class="mt"><h2 class="mt-h">解密地图</h2><div class="mt-st"><svg width="20" height="20" viewBox="0 0 24 24" fill="#F2C94C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span id="allSt">0</span></div></div>
+  <div class="ml" id="mL"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen game-s" id="scnG">
+  <div class="gh"><button class="gh-b" onclick="toMap()">← 返回</button><span class="gh-z" id="ghZ"></span><span class="gh-l" id="ghL"></span></div>
+  <div class="gbd">
+    <div class="gds" id="gDs"></div>
+    <div class="bal-wrap"><canvas class="bal-canvas" id="balC"></canvas></div>
+    <div class="eq-card"><div class="eq-label">求解方程</div><div class="eq-text" id="eqTxt"></div></div>
+    <div class="step-box"><div class="step-txt" id="stepTxt"></div></div>
+    <div class="opts" id="optsG"></div>
+    <div class="g-hint" id="gHint"></div>
+  </div>
+  <div class="streak-bx" id="strkB"></div>
+</div>
+
+<!-- RESULT -->
+<div class="screen res-s" id="scnR">
+  <div class="rs-st" id="rsSt"></div>
+  <h2 class="rs-t" id="rsT"></h2>
+  <p class="rs-msg" id="rsMsg"></p>
+  <div class="rs-row"><div><div class="rv" id="rvO">0</div><div class="rl">答对</div></div><div><div class="rv" id="rvS">0</div><div class="rl">最长连击</div></div></div>
+  <button class="btn-n" id="btnN" onclick="goNxt()">继续解密</button>
+  <button class="btn-s2" onclick="toMap()">返回地图</button>
+</div>
+
+<script>
+/* ==========================================================
+   ZONES
+   ========================================================== */
+const ZONES=[
+  {
+    id:'add',name:'加法密室',desc:'x + a = b，减去就能找到 x',
+    color:'#C47832',bg:'#FFF3E4',icon:'x+a',levels:6,
+    gen(l){
+      const a=ri(1,3+l*2),ans=ri(1,4+l*2);
+      return{eq:`x + ${a} = ${a+ans}`,ans,lhs:{xCoeff:1,xConst:a},rhs:a+ans,
+        hint:`两边同时减去 ${a}：x = ${a+ans} − ${a} = ${ans}`,
+        steps:[`x + ${a} = ${a+ans}`,`x + ${a} − ${a} = ${a+ans} − ${a}`,`x = ${ans}`]};
+    }
+  },
+  {
+    id:'sub',name:'减法暗道',desc:'x − a = b，加回来就对了',
+    color:'#D94F6B',bg:'#FDE6EB',icon:'x−a',levels:6,
+    gen(l){
+      const a=ri(1,3+l*2),ans=ri(a+1,a+4+l*2);
+      return{eq:`x − ${a} = ${ans-a}`,ans,lhs:{xCoeff:1,xConst:-a},rhs:ans-a,
+        hint:`两边同时加上 ${a}：x = ${ans-a} + ${a} = ${ans}`,
+        steps:[`x − ${a} = ${ans-a}`,`x − ${a} + ${a} = ${ans-a} + ${a}`,`x = ${ans}`]};
+    }
+  },
+  {
+    id:'mul',name:'乘法宝库',desc:'a × x = b，除一下就知道了',
+    color:'#1A9E8F',bg:'#E2F7F4',icon:'ax',levels:6,
+    gen(l){
+      const a=ri(2,3+Math.floor(l*.8)),ans=ri(1,4+l);
+      return{eq:`${a}x = ${a*ans}`,ans,lhs:{xCoeff:a,xConst:0},rhs:a*ans,
+        hint:`两边同时除以 ${a}：x = ${a*ans} ÷ ${a} = ${ans}`,
+        steps:[`${a}x = ${a*ans}`,`${a}x ÷ ${a} = ${a*ans} ÷ ${a}`,`x = ${ans}`]};
+    }
+  },
+  {
+    id:'div',name:'除法迷宫',desc:'x ÷ a = b，乘回去就行',
+    color:'#3A8FD6',bg:'#E3F0FB',icon:'x÷a',levels:6,
+    gen(l){
+      const a=ri(2,3+Math.floor(l*.7)),b=ri(1,4+l);const ans=a*b;
+      return{eq:`x ÷ ${a} = ${b}`,ans,lhs:{xCoeff:1/a,xConst:0},rhs:b,
+        hint:`两边同时乘以 ${a}：x = ${b} × ${a} = ${ans}`,
+        steps:[`x ÷ ${a} = ${b}`,`x ÷ ${a} × ${a} = ${b} × ${a}`,`x = ${ans}`]};
+    }
+  },
+  {
+    id:'two',name:'双步圣殿',desc:'ax + b = c，先减后除',
+    color:'#7B4EA0',bg:'#F0E8F7',icon:'ax+b',levels:8,
+    gen(l){
+      const a=ri(2,3+Math.floor(l*.6)),b=ri(1,3+l),ans=ri(1,4+l);const c=a*ans+b;
+      return{eq:`${a}x + ${b} = ${c}`,ans,lhs:{xCoeff:a,xConst:b},rhs:c,
+        hint:`先两边减 ${b} 得 ${a}x = ${c-b}，再除以 ${a} 得 x = ${ans}`,
+        steps:[`${a}x + ${b} = ${c}`,`${a}x = ${c} − ${b} = ${c-b}`,`x = ${c-b} ÷ ${a} = ${ans}`]};
+    }
+  },
+  {
+    id:'mix',name:'终极密室',desc:'全类型混合，随机挑战',
+    color:'#E8A317',bg:'#FFF4D9',icon:'???',levels:8,
+    gen(l){return ZONES[ri(0,4)].gen(l)}
+  }
+];
+
+const QPL=5;
+const CHEERS=['太棒了！方程在你手中毫无秘密！','完美！天平永远在你掌控之中！','了不起！x 的值一眼就被你看穿！','就是这种感觉，你是方程大师！','每道题都让你更强！','天平密码已被你破解！','你的解题速度令人惊叹！','继续前进，没有方程能难倒你！'];
+const OK_W=['正确!','太棒了!','完美!','漂亮!','没错!','好厉害!','答对啦!','解出来了!'];
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+let st=loadS();
+function defS(){return{zones:ZONES.map(z=>({id:z.id,levels:Array(z.levels).fill(0)})),total:0}}
+function loadS(){try{const s=JSON.parse(localStorage.getItem('eqBalance'));if(s&&s.zones)return s}catch(e){}return defS()}
+function saveS(){st.total=st.zones.reduce((a,z)=>a+z.levels.reduce((s,v)=>s+v,0),0);localStorage.setItem('eqBalance',JSON.stringify(st))}
+
+let cZ=0,cL=0,qs=[],qi=0,correct=0,streak=0,maxSk=0,attempts=0,answered=false;
+let balAngle=0,balTarget=0,animId=0,balPhase='tilt';
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function shuf(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=ri(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function lerp(a,b,t){return a+(b-a)*t}
+
+/* particles */
+function burst(x,y,n=20){const box=document.getElementById('ptcB');const cs=['#C47832','#F2C94C','#43A047','#1A9E8F','#D94F6B','#7B4EA0','#3A8FD6'];for(let i=0;i<n;i++){const p=document.createElement('div');p.className='ptc';const sz=ri(5,12),ang=(Math.PI*2*i)/n+Math.random()*.5,d=ri(50,150);const tx=Math.cos(ang)*d,ty=Math.sin(ang)*d-30;p.style.cssText=`width:${sz}px;height:${sz}px;background:${cs[i%cs.length]};left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px`;box.appendChild(p);setTimeout(()=>p.remove(),1000)}}
+function showCk(){const e=document.getElementById('bigOk');e.classList.remove('go');void e.offsetWidth;e.classList.add('go');setTimeout(()=>e.classList.remove('go'),900)}
+function updStrk(){const b=document.getElementById('strkB');if(streak>=3){b.textContent=`🔥 连击 ×${streak}`;b.classList.add('on');b.style.animation='none';void b.offsetWidth;b.style.animation=''}else b.classList.remove('on')}
+
+/* ==========================================================
+   BALANCE CANVAS
+   ========================================================== */
+function drawBal(q, phase){
+  const canvas=document.getElementById('balC');
+  const wrap=canvas.parentElement;
+  const W=wrap.clientWidth,H=Math.round(W*.58);
+  canvas.width=W*2;canvas.height=H*2;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(2,2);
+
+  const cx=W/2, baseY=H-18, pillarH=H*.52, beamW=W*.72;
+  const beamY=baseY-pillarH;
+  const panW=beamW*.36, panH=14, panDrop=42;
+
+  // smooth angle
+  balAngle=lerp(balAngle,balTarget,.08);
+  const ang=balAngle;
+  const radians=ang*Math.PI/180;
+
+  // Base triangle
+  ctx.fillStyle='#C4A060';
+  ctx.beginPath();ctx.moveTo(cx-28,baseY);ctx.lineTo(cx+28,baseY);ctx.lineTo(cx,baseY-16);ctx.closePath();ctx.fill();
+
+  // Pillar
+  const grad=ctx.createLinearGradient(cx-6,baseY-16,cx+6,baseY-16);
+  grad.addColorStop(0,'#D4B070');grad.addColorStop(.5,'#E8CC90');grad.addColorStop(1,'#C4A060');
+  ctx.fillStyle=grad;
+  ctx.fillRect(cx-6,beamY,12,pillarH-16);
+
+  // Pivot circle
+  ctx.beginPath();ctx.arc(cx,beamY,8,0,Math.PI*2);ctx.fillStyle='#B8943E';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,beamY,4,0,Math.PI*2);ctx.fillStyle='#E8CC90';ctx.fill();
+
+  // Beam
+  ctx.save();ctx.translate(cx,beamY);ctx.rotate(radians);
+  const bHalf=beamW/2;
+
+  ctx.fillStyle='#C4A060';
+  ctx.beginPath();
+  ctx.roundRect(-bHalf,-5,beamW,10,5);ctx.fill();
+
+  // decorative lines on beam
+  ctx.strokeStyle='#B8943E';ctx.lineWidth=1;
+  for(let i=-bHalf+20;i<bHalf-10;i+=18){ctx.beginPath();ctx.moveTo(i,-3);ctx.lineTo(i,3);ctx.stroke()}
+
+  // Left pan (LHS)
+  const lpx=-bHalf+panW/2+10, rpx=bHalf-panW/2-10;
+
+  // Strings
+  ctx.strokeStyle='#A08040';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(lpx-panW/2+4,4);ctx.lineTo(lpx,panDrop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(lpx+panW/2-4,4);ctx.lineTo(lpx,panDrop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(rpx-panW/2+4,4);ctx.lineTo(rpx,panDrop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(rpx+panW/2-4,4);ctx.lineTo(rpx,panDrop);ctx.stroke();
+
+  // Pan shapes
+  function drawPan(px,py,label,color,bgColor){
+    // Pan plate
+    ctx.beginPath();
+    ctx.ellipse(px,py+panDrop,panW/2,8,0,0,Math.PI*2);
+    ctx.fillStyle=bgColor;ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+
+    // Block on pan
+    const bw=panW*.65,bh=22;
+    ctx.fillStyle=color+'20';
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(px-bw/2,py+panDrop-bh-6,bw,bh,4);ctx.fill();ctx.stroke();
+
+    // Label
+    ctx.fillStyle=color;
+    ctx.font='700 13px "JetBrains Mono"';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,px,py+panDrop-bh/2-6);
+  }
+
+  // Get labels
+  const lhsLabel = q ? buildLHS(q) : 'x + ?';
+  const rhsLabel = q ? q.rhs.toString() : '?';
+
+  drawPan(lpx,0,lhsLabel,'#C47832','#FFF3E4');
+  drawPan(rpx,0,rhsLabel,'#1A9E8F','#E2F7F4');
+
+  // Side labels
+  ctx.font='600 11px Nunito';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle='#C47832';ctx.fillText('左边',lpx,panDrop+12);
+  ctx.fillStyle='#1A9E8F';ctx.fillText('右边',rpx,panDrop+12);
+
+  ctx.restore();
+
+  // Status text
+  ctx.font='700 13px Nunito';ctx.textAlign='center';ctx.textBaseline='bottom';
+  if(phase==='balanced'){
+    ctx.fillStyle='#43A047';
+    ctx.fillText('⚖️ 天平平衡了！',cx,baseY-pillarH-16);
+  } else if(phase==='thinking'){
+    ctx.fillStyle='#C47832';
+    ctx.fillText('找到让天平平衡的 x',cx,baseY-pillarH-16);
+  } else if(phase==='wrong'){
+    ctx.fillStyle='#D94F6B';
+    ctx.fillText('天平还没平衡，再想想…',cx,baseY-pillarH-16);
+  }
+}
+
+function buildLHS(q){
+  const c=q.lhs.xCoeff,k=q.lhs.xConst;
+  let s='';
+  if(c===1) s='x';
+  else if(c===0.5) s='x/2';
+  else if(c===1/3) s='x/3';
+  else s=c+'x';
+  if(k>0) s+='+'+k;
+  else if(k<0) s+=k;
+  return s;
+}
+
+let animating=false;
+function animBal(){
+  if(!document.getElementById('scnG').classList.contains('active')){animId=0;return}
+  const q=qs[qi];
+  drawBal(q||null,balPhase);
+  animId=requestAnimationFrame(animBal);
+}
+
+/* ==========================================================
+   GENERATE Qs
+   ========================================================== */
+function genQs(zone,lvl){
+  const questions=[];
+  for(let i=0;i<QPL;i++){
+    const q=zone.gen(lvl);
+    const dists=new Set([q.ans]);
+    let safe=0;
+    while(dists.size<4&&safe<50){
+      const off=ri(1,Math.max(3,Math.abs(q.ans)||3));
+      dists.add(q.ans+(Math.random()>.5?off:-off));
+      safe++;
+    }
+    while(dists.size<4) dists.add(q.ans+dists.size+1);
+    q.options=shuf([...dists]);
+    questions.push(q);
+  }
+  return questions;
+}
+
+/* ==========================================================
+   MAP
+   ========================================================== */
+function renderMap(){
+  const list=document.getElementById('mL');list.innerHTML='';
+  document.getElementById('allSt').textContent=st.total;
+  ZONES.forEach((z,zi)=>{
+    const zs=st.zones[zi];const done=zs.levels.filter(v=>v>0).length;
+    const zStars=zs.levels.reduce((a,v)=>a+v,0);
+    const prevOk=zi===0||st.zones[zi-1].levels.filter(v=>v>0).length>=Math.ceil(ZONES[zi-1].levels*.5);
+    const unlocked=prevOk,complete=done===z.levels,current=unlocked&&!complete;
+    const card=document.createElement('div');
+    card.className=`zc${!unlocked?' lk':''}${complete?' dn':''}${current?' nw':''}`;
+    card.innerHTML=`<div class="zi" style="background:${z.bg};color:${z.color}"><span>${z.icon}</span></div>
+      <div class="zb"><div class="zn" style="color:${unlocked?z.color:'#999'}">${z.name}</div><div class="zd">${unlocked?z.desc:'完成前面的区域解锁'}</div>
+      <div class="zdots">${zs.levels.map((v,li)=>{const d=v>0;const c=!d&&(li===0||zs.levels[li-1]>0);return`<div class="zdt${d?' on':''}${c?' cu':''}"></div>`}).join('')}</div></div>
+      <div class="zr"><div class="zsv">${zStars}/${z.levels*3}</div></div>`;
+    if(unlocked) card.onclick=()=>openZ(zi);
+    list.appendChild(card);
+  });
+}
+
+function openZ(zi){cZ=zi;const zs=st.zones[zi];let l=zs.levels.findIndex(v=>v===0);if(l===-1)l=0;startLvl(l)}
+
+/* ==========================================================
+   GAME PLAY
+   ========================================================== */
+function startLvl(l){
+  cL=l;qi=0;correct=0;streak=0;maxSk=0;attempts=0;answered=false;
+  balAngle=0;balTarget=0;balPhase='thinking';
+  const z=ZONES[cZ];
+  qs=genQs(z,l);
+  document.getElementById('ghZ').textContent=z.name;
+  document.getElementById('ghZ').style.color=z.color;
+  document.getElementById('ghL').textContent=`第 ${l+1} 关`;
+  show('scnG');
+  if(animId) cancelAnimationFrame(animId);
+  renderQ();
+  animBal();
+}
+
+function renderQ(){
+  answered=false;balTarget=-6+Math.random()*12;balPhase='thinking';
+  const q=qs[qi];
+
+  const dots=document.getElementById('gDs');dots.innerHTML='';
+  for(let i=0;i<QPL;i++){const d=document.createElement('div');d.className=`gd${i<qi?' done':''}${i===qi?' act':''}`;dots.appendChild(d)}
+
+  // equation display with colored x
+  const eqHtml=q.eq.replace(/x/g,'<span class="x-var">x</span>');
+  document.getElementById('eqTxt').innerHTML=eqHtml;
+
+  document.getElementById('stepTxt').textContent='x 等于多少时，天平才能平衡？';
+  document.getElementById('gHint').textContent='';
+
+  const grid=document.getElementById('optsG');grid.innerHTML='';
+  q.options.forEach(opt=>{
+    const btn=document.createElement('button');btn.className='ob';
+    btn.textContent=`x = ${opt}`;
+    btn.onclick=e=>handleAns(opt,q,btn,e);
+    grid.appendChild(btn);
+  });
+  updStrk();
+}
+
+function handleAns(chosen,q,btn,ev){
+  if(answered)return;
+  attempts++;
+
+  if(chosen===q.ans){
+    answered=true;correct++;streak++;
+    if(streak>maxSk)maxSk=streak;
+
+    btn.classList.add('ok');
+    document.querySelectorAll('.ob').forEach(b=>{if(!b.classList.contains('ok'))b.classList.add('off')});
+
+    // Balance the beam!
+    balTarget=0;balPhase='balanced';
+
+    // Show steps
+    showSteps(q);
+
+    const r=btn.getBoundingClientRect();
+    burst(r.left+r.width/2,r.top+r.height/2,streak>=3?28:16);
+    showCk();updStrk();
+
+    document.getElementById('gHint').textContent=OK_W[ri(0,OK_W.length-1)];
+    document.getElementById('gHint').style.color='#43A047';
+
+    setTimeout(()=>{qi++;if(qi>=QPL)finishLvl();else renderQ()},2200);
+
+  } else {
+    streak=0;updStrk();
+    btn.classList.add('nope');
+
+    // Tilt the beam to show imbalance
+    balTarget=chosen>q.ans?-12:12;
+    balPhase='wrong';
+
+    document.getElementById('gHint').textContent=`💡 ${q.hint}`;
+    document.getElementById('gHint').style.color='var(--copper-dk)';
+  }
+}
+
+function showSteps(q){
+  const box=document.getElementById('stepTxt');
+  if(!q.steps||q.steps.length===0) return;
+
+  let idx=0;
+  box.textContent=q.steps[0];
+  const iv=setInterval(()=>{
+    idx++;
+    if(idx>=q.steps.length){clearInterval(iv);return}
+    box.textContent=q.steps[idx];
+    if(idx===q.steps.length-1) box.style.color='#43A047';
+    else box.style.color='';
+  },600);
+}
+
+/* ==========================================================
+   RESULT
+   ========================================================== */
+function finishLvl(){
+  if(animId){cancelAnimationFrame(animId);animId=0}
+  let stars;if(attempts<=QPL)stars=3;else if(attempts<=QPL+2)stars=2;else stars=1;
+  const prev=st.zones[cZ].levels[cL];if(stars>prev){st.zones[cZ].levels[cL]=stars;saveS()}
+  const starsEl=document.getElementById('rsSt');starsEl.innerHTML='';
+  for(let i=0;i<3;i++){const s=document.createElement('div');s.className=`rs${i<stars?' got':''}`;s.innerHTML=`<svg viewBox="0 0 24 24" fill="${i<stars?'#F2C94C':'#DDD0BE'}"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;starsEl.appendChild(s)}
+  const ts=['做到了！','太棒了！','完美通关！'];
+  document.getElementById('rsT').textContent=ts[Math.min(stars-1,2)];
+  document.getElementById('rsMsg').textContent=CHEERS[ri(0,CHEERS.length-1)];
+  document.getElementById('rvO').textContent=`${correct}/${QPL}`;
+  document.getElementById('rvS').textContent=maxSk;
+  const hasNext=cL+1<ZONES[cZ].levels;const btn=document.getElementById('btnN');
+  btn.textContent=hasNext?'继续解密':'返回地图';btn.onclick=hasNext?goNxt:toMap;
+  show('scnR');setTimeout(()=>burst(window.innerWidth/2,window.innerHeight/3,35),500);
+}
+function goNxt(){if(cL+1<ZONES[cZ].levels)startLvl(cL+1);else toMap()}
+
+/* NAV */
+function enterMap(){show('scnM');renderMap()}
+function toMap(){if(animId){cancelAnimationFrame(animId);animId=0}show('scnM');renderMap()}
+saveS();
+</script>
+</body>
+</html>

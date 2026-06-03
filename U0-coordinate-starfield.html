@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>坐标星图 · 平面直角坐标系探险</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --indigo:#4A3AFF;--indigo-dark:#3528CC;--indigo-light:#EEEDFF;
+  --navy:#1B1340;--navy-mid:#2D2260;
+  --cyan:#22D9C6;--cyan-light:#D6FFF9;
+  --magenta:#FF4FA0;--magenta-light:#FFE4F0;
+  --amber:#FFB830;--amber-light:#FFF4D9;
+  --lime:#7CDB3A;--lime-light:#ECFFD6;
+  --star-gold:#FFD54F;
+  --white:#FFFFFF;--off-white:#F8F7FF;
+  --txt:#1B1340;--txt-mid:#5A5280;
+  --shadow-s:0 4px 18px rgba(26,19,64,.08);
+  --shadow-m:0 8px 30px rgba(26,19,64,.12);
+  --shadow-l:0 14px 50px rgba(26,19,64,.18);
+  --r:16px;--r-lg:22px;
+}
+
+body{font-family:'Baloo 2',sans-serif;background:var(--off-white);color:var(--txt);overflow-x:hidden;min-height:100vh;-webkit-tap-highlight-color:transparent}
+
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ================ WELCOME ================ */
+.welcome{
+  align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#0F0A2E 0%,#1B1340 30%,#2D2260 60%,#3D2E80 100%);
+  position:relative;overflow:hidden;padding:40px 24px;
+}
+
+.star-field{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sf{position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;animation:twinkle var(--dur) ease-in-out infinite var(--del)}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+
+.grid-bg{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(74,58,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(74,58,255,.12) 1px,transparent 1px);
+  background-size:50px 50px;
+  opacity:.5;
+}
+
+.w-box{position:relative;z-index:2;text-align:center;max-width:480px}
+
+.w-badge{display:inline-block;padding:6px 18px;border-radius:100px;background:rgba(74,58,255,.3);border:1px solid rgba(74,58,255,.5);font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:1.5px;margin-bottom:22px}
+
+.w-title{font-size:clamp(40px,10vw,68px);font-weight:800;line-height:1.05;color:var(--white);margin-bottom:8px}
+.w-title em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--indigo),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.w-sub{font-size:17px;color:rgba(255,255,255,.6);font-weight:500;line-height:1.7;margin-bottom:40px}
+.w-sub small{display:block;font-size:13px;margin-top:6px;opacity:.5}
+
+.w-coord{
+  display:inline-block;margin-bottom:32px;
+  font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;
+  color:var(--cyan);letter-spacing:2px;
+  text-shadow:0 0 30px rgba(34,217,198,.4);
+  animation:coordPulse 3s ease-in-out infinite;
+}
+@keyframes coordPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+
+.btn-go{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--indigo),var(--indigo-dark));color:#fff;border:none;
+  padding:17px 46px;border-radius:100px;font-size:19px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  box-shadow:0 8px 30px rgba(74,58,255,.4);
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;
+}
+.btn-go:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(74,58,255,.5)}
+.btn-go:active{transform:scale(.97)}
+.btn-go::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);animation:shine 2.8s ease-in-out infinite}
+@keyframes shine{0%,70%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+
+/* ================ MAP ================ */
+.map-scn{background:linear-gradient(180deg,var(--indigo-light) 0%,var(--off-white) 100%);padding:0}
+
+.m-top{padding:18px 22px;display:flex;align-items:center;justify-content:space-between}
+.m-h{font-size:21px;font-weight:700}
+.m-stars{display:flex;align-items:center;gap:5px;background:var(--amber-light);padding:7px 14px;border-radius:100px;font-weight:700;color:#CC8800;font-size:15px}
+
+.m-list{flex:1;padding:6px 18px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+
+.zc{background:var(--white);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-s);cursor:pointer;display:flex;align-items:center;gap:16px;border:2px solid transparent;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.zc:hover{transform:translateY(-2px);box-shadow:var(--shadow-m)}
+.zc:active{transform:scale(.98)}
+.zc.locked{opacity:.4;pointer-events:none;filter:grayscale(.3)}
+.zc.done{border-color:var(--lime)}
+.zc.now{border-color:var(--indigo);animation:zcP 2s ease-in-out infinite}
+@keyframes zcP{0%,100%{box-shadow:var(--shadow-s),0 0 0 0 rgba(74,58,255,.1)}50%{box-shadow:var(--shadow-s),0 0 0 8px rgba(74,58,255,.04)}}
+
+.zc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;font-weight:700}
+.zc-body{flex:1}
+.zc-nm{font-size:16px;font-weight:700;margin-bottom:2px}
+.zc-ds{font-size:12px;color:var(--txt-mid);font-weight:500}
+.zc-dots{display:flex;gap:4px;margin-top:7px}
+.zc-dt{width:9px;height:9px;border-radius:50%;background:#ddd;transition:.3s}
+.zc-dt.on{background:var(--star-gold)}
+.zc-dt.cu{background:var(--indigo);animation:dtP 1.4s ease-in-out infinite}
+@keyframes dtP{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.zc-rt{text-align:right;flex-shrink:0}
+.zc-sv{font-size:13px;font-weight:700;color:#CC8800}
+
+/* ================ GAME ================ */
+.game-scn{background:var(--off-white);padding:0}
+
+.gh{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:var(--white);box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.gh-bk{background:none;border:none;font-size:15px;font-weight:700;color:var(--txt-mid);cursor:pointer;font-family:inherit;padding:8px}
+.gh-zn{font-size:13px;font-weight:700;color:var(--indigo)}
+.gh-lv{font-size:13px;font-weight:600;color:var(--txt-mid)}
+
+.gb{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 14px 20px;position:relative;overflow-y:auto}
+
+.gdots{display:flex;gap:9px;margin-bottom:16px}
+.gdt{width:11px;height:11px;border-radius:50%;background:#ddd;transition:.4s cubic-bezier(.34,1.56,.64,1)}
+.gdt.dn{background:#7CDB3A;transform:scale(1.1)}
+.gdt.ac{background:var(--indigo);transform:scale(1.3);box-shadow:0 0 0 4px rgba(74,58,255,.18)}
+
+/* coordinate grid canvas */
+.grid-wrap{
+  width:100%;max-width:420px;aspect-ratio:1/1;
+  background:var(--white);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-m);margin-bottom:16px;
+  position:relative;overflow:hidden;padding:0;
+}
+
+.grid-canvas{display:block;width:100%;height:100%;touch-action:none}
+
+/* question prompt */
+.q-prompt{
+  background:var(--white);border-radius:var(--r);padding:14px 22px;
+  box-shadow:var(--shadow-s);text-align:center;max-width:420px;width:100%;
+  margin-bottom:14px;
+}
+.q-ask{font-size:15px;font-weight:600;color:var(--txt-mid);margin-bottom:4px}
+.q-what{font-size:13px;font-weight:700;color:var(--indigo)}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:420px;width:100%}
+
+.ob{
+  background:var(--white);border:2.5px solid #E4E0F0;border-radius:var(--r);
+  padding:14px 10px;font-size:clamp(17px,4vw,22px);font-weight:700;
+  font-family:'JetBrains Mono',monospace;color:var(--txt);cursor:pointer;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);text-align:center;
+}
+.ob:hover{border-color:var(--indigo);transform:translateY(-2px);box-shadow:var(--shadow-s)}
+.ob:active{transform:scale(.96)}
+.ob.ok{background:var(--lime-light);border-color:var(--lime);color:#2E7D32;animation:okP .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes okP{0%{transform:scale(.9)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.ob.nope{animation:nSh .45s ease;opacity:.35;pointer-events:none}
+@keyframes nSh{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.ob.off{opacity:.3;pointer-events:none}
+
+.g-hint{margin-top:12px;font-size:13px;color:var(--indigo);font-weight:600;min-height:20px;max-width:420px;text-align:center;line-height:1.5}
+
+.streak-b{position:fixed;top:72px;right:16px;background:linear-gradient(135deg,var(--amber),var(--star-gold));color:var(--txt);padding:8px 16px;border-radius:100px;font-weight:700;font-size:13px;box-shadow:var(--shadow-m);z-index:50;display:none}
+.streak-b.on{display:block;animation:sbIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sbIn{0%{transform:translateX(80px) scale(.5);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+
+/* ================ RESULT ================ */
+.res-scn{
+  align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#0F0A2E 0%,#1B1340 40%,#2D2260 100%);
+  padding:40px 24px;text-align:center;position:relative;overflow:hidden;
+}
+
+.rs-stars{display:flex;gap:12px;margin-bottom:22px}
+.rs-s{width:50px;height:50px;opacity:0;transform:scale(0) rotate(-25deg)}
+.rs-s.got{animation:sE .6s cubic-bezier(.34,1.56,.64,1) forwards}
+.rs-s:nth-child(2).got{animation-delay:.2s}
+.rs-s:nth-child(3).got{animation-delay:.4s}
+@keyframes sE{0%{opacity:0;transform:scale(0) rotate(-25deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.rs-s svg{width:100%;height:100%}
+
+.rs-t{font-size:28px;font-weight:800;color:var(--white);margin-bottom:8px;animation:fU .6s ease .5s both}
+.rs-msg{font-size:15px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:10px;animation:fU .6s ease .6s both;line-height:1.6}
+
+.rs-row{display:flex;gap:24px;margin:22px 0 32px;animation:fU .6s ease .7s both}
+.rs-v{font-size:24px;font-weight:800;color:var(--cyan)}
+.rs-l{font-size:11px;color:rgba(255,255,255,.4);font-weight:600}
+
+@keyframes fU{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.btn-nxt{background:linear-gradient(135deg,var(--indigo),var(--indigo-dark));color:#fff;border:none;padding:15px 42px;border-radius:100px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 8px 28px rgba(74,58,255,.35);transition:all .3s;animation:fU .6s ease .8s both}
+.btn-nxt:hover{transform:translateY(-2px)}
+.btn-nxt:active{transform:scale(.97)}
+
+.btn-sec2{background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.15);padding:11px 28px;border-radius:100px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .3s;animation:fU .6s ease .9s both;margin-top:12px}
+.btn-sec2:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ================ PARTICLES ================ */
+.ptc-box{position:fixed;inset:0;pointer-events:none;z-index:1000;overflow:hidden}
+.ptc{position:absolute;border-radius:50%;animation:ptcF 1s ease-out forwards}
+@keyframes ptcF{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+
+.big-ok{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:88px;height:88px;z-index:999;pointer-events:none}
+.big-ok.go{animation:bP .8s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes bP{0%{transform:translate(-50%,-50%) scale(0);opacity:0}40%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-50%) scale(0);opacity:0}}
+
+@media(max-width:480px){
+  .grid-wrap{max-width:340px}
+  .opts{gap:8px}
+  .ob{padding:12px 8px}
+  .q-prompt{padding:12px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="ptc-box" id="ptcBox"></div>
+<div class="big-ok" id="bigOk"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#7CDB3A"/><path d="M30 52L45 67L72 35" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+<!-- ======== WELCOME ======== -->
+<div class="screen welcome active" id="scnW">
+  <div class="star-field" id="starField"></div>
+  <div class="grid-bg"></div>
+  <div class="w-box">
+    <div class="w-badge">U → E 阶段</div>
+    <h1 class="w-title">坐标<em>星图</em></h1>
+    <p class="w-sub">每个点都有自己的坐标地址——学会读懂它们<small>点一下就能回答，答错了有引导线帮你</small></p>
+    <div class="w-coord">(x, y)</div><br>
+    <button class="btn-go" onclick="enterMap()">开始探索 →</button>
+  </div>
+</div>
+
+<!-- ======== MAP ======== -->
+<div class="screen map-scn" id="scnM">
+  <div class="m-top">
+    <h2 class="m-h">星图探索</h2>
+    <div class="m-stars"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD54F"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span id="allStars">0</span></div>
+  </div>
+  <div class="m-list" id="mList"></div>
+</div>
+
+<!-- ======== GAME ======== -->
+<div class="screen game-scn" id="scnG">
+  <div class="gh">
+    <button class="gh-bk" onclick="toMap()">← 返回</button>
+    <span class="gh-zn" id="ghZn"></span>
+    <span class="gh-lv" id="ghLv"></span>
+  </div>
+  <div class="gb">
+    <div class="gdots" id="gDots"></div>
+    <div class="grid-wrap">
+      <canvas class="grid-canvas" id="gridCanvas"></canvas>
+    </div>
+    <div class="q-prompt">
+      <div class="q-ask" id="qAsk">图上闪烁的点的坐标是？</div>
+      <div class="q-what" id="qWhat"></div>
+    </div>
+    <div class="opts" id="optsG"></div>
+    <div class="g-hint" id="gHint"></div>
+  </div>
+  <div class="streak-b" id="strkB"></div>
+</div>
+
+<!-- ======== RESULT ======== -->
+<div class="screen res-scn" id="scnR">
+  <div class="star-field" id="starField2"></div>
+  <div class="rs-stars" id="rsStars"></div>
+  <h2 class="rs-t" id="rsT"></h2>
+  <p class="rs-msg" id="rsMsg"></p>
+  <div class="rs-row">
+    <div><div class="rs-v" id="rvOk">0</div><div class="rs-l">答对</div></div>
+    <div><div class="rs-v" id="rvSt">0</div><div class="rs-l">最长连击</div></div>
+  </div>
+  <button class="btn-nxt" id="btnN" onclick="goNext()">继续探索</button>
+  <button class="btn-sec2" onclick="toMap()">返回地图</button>
+</div>
+
+<script>
+/* ==========================================================
+   ZONES — progressive quadrant unlocking
+   ========================================================== */
+const ZONES = [
+  {
+    id:'q1', name:'第一象限', desc:'x 和 y 都是正数的温暖地带',
+    color:'#4A3AFF', bg:'#EEEDFF', icon:'Ⅰ',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + lvl;
+      return { x: ri(1, max), y: ri(1, max) };
+    }
+  },
+  {
+    id:'q2', name:'第二象限', desc:'x 变负了！小心左转',
+    color:'#FF4FA0', bg:'#FFE4F0', icon:'Ⅱ',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + lvl;
+      return { x: -ri(1, max), y: ri(1, max) };
+    }
+  },
+  {
+    id:'q12', name:'上半平面', desc:'第一象限和第二象限混合',
+    color:'#22D9C6', bg:'#D6FFF9', icon:'⬆',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + lvl;
+      const x = ri(1, max) * (Math.random() > .5 ? 1 : -1);
+      return { x, y: ri(1, max) };
+    }
+  },
+  {
+    id:'q34', name:'下半平面', desc:'y 变负了！向下探索',
+    color:'#FFB830', bg:'#FFF4D9', icon:'⬇',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + lvl;
+      const x = ri(1, max) * (Math.random() > .5 ? 1 : -1);
+      return { x, y: -ri(1, max) };
+    }
+  },
+  {
+    id:'all', name:'全平面星域', desc:'四个象限自由遨游',
+    color:'#7C5CBF', bg:'#EDE7F6', icon:'✦',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + Math.floor(lvl * .8);
+      let x = ri(1, max) * (Math.random() > .5 ? 1 : -1);
+      let y = ri(1, max) * (Math.random() > .5 ? 1 : -1);
+      // occasionally include axis points
+      if(lvl >= 2 && Math.random() < .2) { if(Math.random()>.5) x=0; else y=0; }
+      return { x, y };
+    }
+  },
+  {
+    id:'axis', name:'坐标轴与原点', desc:'在轴上的点和特殊的原点',
+    color:'#E06050', bg:'#FDE8E4', icon:'⊕',
+    levels:6,
+    genPt(lvl){
+      const max = 3 + lvl;
+      const r = Math.random();
+      if(r < .15) return { x:0, y:0 };
+      if(r < .55) return { x: ri(1,max) * (Math.random()>.5?1:-1), y:0 };
+      return { x:0, y: ri(1,max) * (Math.random()>.5?1:-1) };
+    }
+  }
+];
+
+const QPL = 5;
+const CHEERS = ['太棒了！你已经是坐标系的探险家了！','完美！每个点都难不倒你！','了不起！你能看穿坐标的秘密！','就是这种感觉，继续前进吧！','你的定位能力越来越强了！','每颗星星都因你而闪耀！','坐标大师正在觉醒！','探索的脚步永不停歇！'];
+const OK_W = ['正确!','太棒了!','完美!','漂亮!','没错!','好厉害!','答对啦!','就是它!'];
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+let st = loadS();
+function defS(){return{zones:ZONES.map(z=>({id:z.id,levels:Array(z.levels).fill(0)})),total:0}}
+function loadS(){try{const s=JSON.parse(localStorage.getItem('coordStar'));if(s&&s.zones)return s}catch(e){}return defS()}
+function saveS(){st.total=st.zones.reduce((a,z)=>a+z.levels.reduce((s,v)=>s+v,0),0);localStorage.setItem('coordStar',JSON.stringify(st))}
+
+let cZ=0,cL=0,qs=[],qi=0,correct=0,streak=0,maxS=0,attempts=0,answered=false;
+let animFrame=0, pointPulse=0;
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function shuf(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=ri(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+/* ==========================================================
+   PARTICLES
+   ========================================================== */
+function burst(x,y,n=20){
+  const box=document.getElementById('ptcBox');
+  const cs=['#4A3AFF','#22D9C6','#FF4FA0','#FFB830','#7CDB3A','#FFD54F','#7C5CBF'];
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='ptc';
+    const sz=ri(5,12),ang=(Math.PI*2*i)/n+Math.random()*.5,d=ri(50,150);
+    const tx=Math.cos(ang)*d,ty=Math.sin(ang)*d-30;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${cs[i%cs.length]};left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px`;
+    box.appendChild(p);setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function showCk(){const e=document.getElementById('bigOk');e.classList.remove('go');void e.offsetWidth;e.classList.add('go');setTimeout(()=>e.classList.remove('go'),900)}
+
+function updStrk(){
+  const b=document.getElementById('strkB');
+  if(streak>=3){b.textContent=`🔥 连击 ×${streak}`;b.classList.add('on');b.style.animation='none';void b.offsetWidth;b.style.animation=''}
+  else b.classList.remove('on');
+}
+
+/* ==========================================================
+   STAR FIELD — decorative
+   ========================================================== */
+function initStars(containerId, count=80){
+  const c=document.getElementById(containerId);
+  if(!c || c.children.length>0) return;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');s.className='sf';
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${1.5+Math.random()*3}s;--del:${Math.random()*3}s;width:${1+Math.random()*2.5}px;height:${1+Math.random()*2.5}px`;
+    c.appendChild(s);
+  }
+}
+
+/* ==========================================================
+   CANVAS — draw coordinate grid + point
+   ========================================================== */
+function drawGrid(pt, showGuide, highlightAnswer){
+  const canvas = document.getElementById('gridCanvas');
+  const wrap = canvas.parentElement;
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  canvas.width = W * 2; canvas.height = H * 2;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  const pad = 36;
+  const zone = ZONES[cZ];
+
+  // Determine grid range
+  let maxCoord;
+  if(zone.id === 'q1') maxCoord = 4 + cL;
+  else maxCoord = 4 + Math.floor(cL * .7);
+  maxCoord = Math.max(maxCoord, Math.abs(pt.x)+1, Math.abs(pt.y)+1, 5);
+
+  let xMin, xMax, yMin, yMax;
+  if(zone.id === 'q1'){
+    xMin = -1; xMax = maxCoord;
+    yMin = -1; yMax = maxCoord;
+  } else {
+    xMin = -maxCoord; xMax = maxCoord;
+    yMin = -maxCoord; yMax = maxCoord;
+  }
+
+  const gridW = W - pad * 2;
+  const gridH = H - pad * 2;
+  const xRange = xMax - xMin;
+  const yRange = yMax - yMin;
+  const cellW = gridW / xRange;
+  const cellH = gridH / yRange;
+
+  function toCanvasX(gx){return pad + (gx - xMin) * cellW}
+  function toCanvasY(gy){return pad + (yMax - gy) * cellH}
+
+  // Background
+  ctx.fillStyle = '#FAFAFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // Quadrant shading
+  const ox = toCanvasX(0), oy = toCanvasY(0);
+  const quadColors = ['rgba(124,219,58,.04)','rgba(255,79,160,.04)','rgba(74,58,255,.04)','rgba(255,184,48,.04)'];
+  // Q1
+  ctx.fillStyle = quadColors[0];
+  ctx.fillRect(ox, pad, W-pad-ox+1, oy-pad+1);
+  // Q2
+  ctx.fillStyle = quadColors[1];
+  ctx.fillRect(pad, pad, ox-pad+1, oy-pad+1);
+  // Q3
+  ctx.fillStyle = quadColors[2];
+  ctx.fillRect(pad, oy, ox-pad+1, H-pad-oy+1);
+  // Q4
+  ctx.fillStyle = quadColors[3];
+  ctx.fillRect(ox, oy, W-pad-ox+1, H-pad-oy+1);
+
+  // Grid lines
+  ctx.strokeStyle = '#E0DCF0';
+  ctx.lineWidth = 1;
+  for(let gx=xMin; gx<=xMax; gx++){
+    const cx = toCanvasX(gx);
+    ctx.beginPath();ctx.moveTo(cx,pad);ctx.lineTo(cx,H-pad);ctx.stroke();
+  }
+  for(let gy=yMin; gy<=yMax; gy++){
+    const cy = toCanvasY(gy);
+    ctx.beginPath();ctx.moveTo(pad,cy);ctx.lineTo(W-pad,cy);ctx.stroke();
+  }
+
+  // Axes (thick)
+  ctx.strokeStyle = '#8880B0';
+  ctx.lineWidth = 2;
+  // x-axis
+  ctx.beginPath();ctx.moveTo(pad, oy);ctx.lineTo(W-pad, oy);ctx.stroke();
+  // y-axis
+  ctx.beginPath();ctx.moveTo(ox, pad);ctx.lineTo(ox, H-pad);ctx.stroke();
+
+  // Arrows
+  ctx.fillStyle = '#8880B0';
+  // x arrow
+  ctx.beginPath();ctx.moveTo(W-pad,oy);ctx.lineTo(W-pad-8,oy-5);ctx.lineTo(W-pad-8,oy+5);ctx.fill();
+  // y arrow
+  ctx.beginPath();ctx.moveTo(ox,pad);ctx.lineTo(ox-5,pad+8);ctx.lineTo(ox+5,pad+8);ctx.fill();
+
+  // Axis labels
+  ctx.fillStyle = '#5A5280';
+  ctx.font = '600 13px "Baloo 2"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('x', W - pad + 2, oy + 6);
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('y', ox + 12, pad - 2);
+
+  // Tick labels
+  ctx.fillStyle = '#9990B8';
+  ctx.font = '500 11px "Baloo 2"';
+  ctx.textBaseline = 'top';
+  for(let gx = xMin; gx <= xMax; gx++){
+    if(gx === 0) continue;
+    const cx = toCanvasX(gx);
+    ctx.textAlign = 'center';
+    ctx.fillText(gx, cx, oy + 5);
+  }
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for(let gy = yMin; gy <= yMax; gy++){
+    if(gy === 0) continue;
+    const cy = toCanvasY(gy);
+    ctx.fillText(gy, ox - 6, cy);
+  }
+  // Origin
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillText('O', ox - 5, oy + 4);
+
+  // Guide lines (dashed) — show after wrong answer
+  if(showGuide){
+    ctx.save();
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 2;
+
+    // Vertical line from point to x-axis
+    ctx.strokeStyle = 'rgba(74,58,255,.45)';
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(pt.x), toCanvasY(pt.y));
+    ctx.lineTo(toCanvasX(pt.x), oy);
+    ctx.stroke();
+
+    // Horizontal line from point to y-axis
+    ctx.strokeStyle = 'rgba(255,79,160,.45)';
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(pt.x), toCanvasY(pt.y));
+    ctx.lineTo(ox, toCanvasY(pt.y));
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Labels on axes
+    ctx.font = '700 13px "JetBrains Mono"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#4A3AFF';
+    ctx.fillText(`x=${pt.x}`, toCanvasX(pt.x), oy - 2);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FF4FA0';
+    ctx.fillText(`y=${pt.y}`, ox + 6, toCanvasY(pt.y));
+  }
+
+  // Answer coordinate label — show after correct
+  if(highlightAnswer){
+    ctx.font = '700 14px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#2E7D32';
+    const label = `(${pt.x}, ${pt.y})`;
+    ctx.fillText(label, toCanvasX(pt.x) + 10, toCanvasY(pt.y) - 6);
+  }
+
+  // Point — pulsing
+  const px = toCanvasX(pt.x), py = toCanvasY(pt.y);
+  pointPulse = (pointPulse + .04) % (Math.PI * 2);
+  const pulse = .5 + .5 * Math.sin(pointPulse * 3);
+  const baseR = 7, pulseR = baseR + pulse * 4;
+  const ptColor = highlightAnswer ? '#2E7D32' : zone.color;
+
+  // Glow
+  ctx.beginPath();
+  ctx.arc(px, py, pulseR + 6, 0, Math.PI * 2);
+  ctx.fillStyle = (ptColor) + '18';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(px, py, pulseR + 2, 0, Math.PI * 2);
+  ctx.fillStyle = (ptColor) + '30';
+  ctx.fill();
+
+  // Core
+  ctx.beginPath();
+  ctx.arc(px, py, baseR, 0, Math.PI * 2);
+  ctx.fillStyle = ptColor;
+  ctx.fill();
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+}
+
+let showGuide = false, showAnswer = false, currentPt = {x:0,y:0};
+
+function animateGrid(){
+  if(!document.getElementById('scnG').classList.contains('active')){
+    animFrame = 0;
+    return;
+  }
+  drawGrid(currentPt, showGuide, showAnswer);
+  animFrame = requestAnimationFrame(animateGrid);
+}
+
+/* ==========================================================
+   GENERATE QUESTIONS
+   ========================================================== */
+function genQs(zone, lvl){
+  const questions = [];
+  for(let i=0;i<QPL;i++){
+    const pt = zone.genPt(lvl);
+    const answer = `(${pt.x}, ${pt.y})`;
+
+    const dists = new Set([answer]);
+    let safe = 0;
+    while(dists.size < 4 && safe < 60){
+      // Generate plausible wrong coordinates
+      const r = Math.random();
+      let fx, fy;
+      if(r < .25){
+        // Swap x and y
+        fx = pt.y; fy = pt.x;
+      } else if(r < .5){
+        // Negate one
+        fx = -pt.x; fy = pt.y;
+      } else if(r < .7){
+        fx = pt.x; fy = -pt.y;
+      } else {
+        // Shift one by 1-2
+        const dx = ri(1,2) * (Math.random()>.5?1:-1);
+        const dy = ri(1,2) * (Math.random()>.5?1:-1);
+        fx = pt.x + (Math.random()>.5?dx:0);
+        fy = pt.y + (Math.random()>.5?0:dy);
+      }
+      const fake = `(${fx}, ${fy})`;
+      if(fake !== answer) dists.add(fake);
+      safe++;
+    }
+    // fill remaining
+    while(dists.size < 4){
+      dists.add(`(${pt.x + dists.size}, ${pt.y - dists.size})`);
+    }
+
+    const hint = buildHint(pt);
+
+    questions.push({
+      pt, answer,
+      options: shuf([...dists]),
+      hint
+    });
+  }
+  return questions;
+}
+
+function buildHint(pt){
+  if(pt.x === 0 && pt.y === 0) return '这个点在两条轴的交叉处，就是原点 (0, 0)';
+  if(pt.x === 0) return `这个点在 y 轴上，x 坐标为 0，往${pt.y>0?'上':'下'}数 ${Math.abs(pt.y)} 格`;
+  if(pt.y === 0) return `这个点在 x 轴上，y 坐标为 0，往${pt.x>0?'右':'左'}数 ${Math.abs(pt.x)} 格`;
+
+  const xDir = pt.x > 0 ? '右' : '左';
+  const yDir = pt.y > 0 ? '上' : '下';
+  return `从原点出发，先往${xDir}走 ${Math.abs(pt.x)} 格得到 x=${pt.x}，再往${yDir}走 ${Math.abs(pt.y)} 格得到 y=${pt.y}`;
+}
+
+/* ==========================================================
+   MAP
+   ========================================================== */
+function renderMap(){
+  const list = document.getElementById('mList');
+  list.innerHTML = '';
+  document.getElementById('allStars').textContent = st.total;
+
+  ZONES.forEach((z,zi)=>{
+    const zs = st.zones[zi];
+    const done = zs.levels.filter(v=>v>0).length;
+    const zStars = zs.levels.reduce((a,v)=>a+v,0);
+    const prevOk = zi===0 || st.zones[zi-1].levels.filter(v=>v>0).length >= Math.ceil(ZONES[zi-1].levels*.5);
+    const unlocked = prevOk;
+    const complete = done === z.levels;
+    const current = unlocked && !complete;
+
+    const card = document.createElement('div');
+    card.className = `zc${!unlocked?' locked':''}${complete?' done':''}${current?' now':''}`;
+    card.innerHTML = `
+      <div class="zc-icon" style="background:${z.bg};color:${z.color}">${z.icon}</div>
+      <div class="zc-body">
+        <div class="zc-nm" style="color:${unlocked?z.color:'#999'}">${z.name}</div>
+        <div class="zc-ds">${unlocked?z.desc:'完成前面的区域解锁'}</div>
+        <div class="zc-dots">${zs.levels.map((v,li)=>{
+          const d=v>0;const c=!d&&(li===0||zs.levels[li-1]>0);
+          return `<div class="zc-dt${d?' on':''}${c?' cu':''}"></div>`;
+        }).join('')}</div>
+      </div>
+      <div class="zc-rt"><div class="zc-sv">${zStars}/${z.levels*3}</div></div>`;
+    if(unlocked) card.onclick=()=>openZ(zi);
+    list.appendChild(card);
+  });
+}
+
+function openZ(zi){
+  cZ=zi;
+  const zs=st.zones[zi];
+  let l=zs.levels.findIndex(v=>v===0);if(l===-1)l=0;
+  startLvl(l);
+}
+
+/* ==========================================================
+   GAME PLAY
+   ========================================================== */
+function startLvl(l){
+  cL=l;qi=0;correct=0;streak=0;maxS=0;attempts=0;answered=false;
+  showGuide=false;showAnswer=false;
+  const z=ZONES[cZ];
+  qs=genQs(z,l);
+  document.getElementById('ghZn').textContent=z.name;
+  document.getElementById('ghZn').style.color=z.color;
+  document.getElementById('ghLv').textContent=`第 ${l+1} 关`;
+  show('scnG');
+  if(animFrame) cancelAnimationFrame(animFrame);
+  renderQ();
+  animateGrid();
+}
+
+function renderQ(){
+  answered=false;showGuide=false;showAnswer=false;
+  const q=qs[qi];
+  currentPt=q.pt;
+
+  const dots=document.getElementById('gDots');
+  dots.innerHTML='';
+  for(let i=0;i<QPL;i++){
+    const d=document.createElement('div');
+    d.className=`gdt${i<qi?' dn':''}${i===qi?' ac':''}`;
+    dots.appendChild(d);
+  }
+
+  document.getElementById('qAsk').textContent='图上闪烁的点的坐标是？';
+  document.getElementById('qWhat').textContent='选出正确的 (x, y)';
+  document.getElementById('gHint').textContent='';
+
+  const grid=document.getElementById('optsG');
+  grid.innerHTML='';
+  q.options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='ob';
+    btn.textContent=opt;
+    btn.onclick=(e)=>handleAns(opt,q,btn,e);
+    grid.appendChild(btn);
+  });
+
+  updStrk();
+}
+
+function handleAns(chosen,q,btn,ev){
+  if(answered)return;
+  attempts++;
+
+  if(chosen===q.answer){
+    answered=true;
+    correct++;
+    streak++;
+    if(streak>maxS) maxS=streak;
+
+    btn.classList.add('ok');
+    document.querySelectorAll('.ob').forEach(b=>{if(!b.classList.contains('ok'))b.classList.add('off')});
+
+    showAnswer=true;showGuide=true;
+
+    const r=btn.getBoundingClientRect();
+    burst(r.left+r.width/2,r.top+r.height/2,streak>=3?28:16);
+    showCk();updStrk();
+
+    document.getElementById('gHint').textContent=OK_W[ri(0,OK_W.length-1)];
+    document.getElementById('gHint').style.color='#2E7D32';
+
+    setTimeout(()=>{
+      qi++;
+      if(qi>=QPL) finishLvl();
+      else renderQ();
+    },1600);
+
+  } else {
+    streak=0;updStrk();
+    btn.classList.add('nope');
+    showGuide=true; // show dashed guide lines on wrong
+    document.getElementById('gHint').textContent=`💡 ${q.hint}`;
+    document.getElementById('gHint').style.color='var(--indigo)';
+  }
+}
+
+/* ==========================================================
+   RESULT
+   ========================================================== */
+function finishLvl(){
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=0}
+
+  let stars;
+  if(attempts<=QPL) stars=3;
+  else if(attempts<=QPL+2) stars=2;
+  else stars=1;
+
+  const prev=st.zones[cZ].levels[cL];
+  if(stars>prev){st.zones[cZ].levels[cL]=stars;saveS()}
+
+  const starsEl=document.getElementById('rsStars');
+  starsEl.innerHTML='';
+  for(let i=0;i<3;i++){
+    const s=document.createElement('div');
+    s.className=`rs-s${i<stars?' got':''}`;
+    s.innerHTML=`<svg viewBox="0 0 24 24" fill="${i<stars?'#FFD54F':'#444'}"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+    starsEl.appendChild(s);
+  }
+
+  const ts=['做到了！','太棒了！','完美通关！'];
+  document.getElementById('rsT').textContent=ts[Math.min(stars-1,2)];
+  document.getElementById('rsMsg').textContent=CHEERS[ri(0,CHEERS.length-1)];
+  document.getElementById('rvOk').textContent=`${correct}/${QPL}`;
+  document.getElementById('rvSt').textContent=maxS;
+
+  const hasNext=cL+1<ZONES[cZ].levels;
+  const btn=document.getElementById('btnN');
+  btn.textContent=hasNext?'继续探索':'返回地图';
+  btn.onclick=hasNext?goNext:toMap;
+
+  show('scnR');
+  initStars('starField2', 60);
+  setTimeout(()=>burst(window.innerWidth/2,window.innerHeight/3,35),500);
+}
+
+function goNext(){if(cL+1<ZONES[cZ].levels)startLvl(cL+1);else toMap()}
+
+/* ==========================================================
+   NAV
+   ========================================================== */
+function enterMap(){show('scnM');renderMap()}
+function toMap(){if(animFrame){cancelAnimationFrame(animFrame);animFrame=0}show('scnM');renderMap()}
+
+/* INIT */
+initStars('starField', 80);
+saveS();
+</script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>分数森林 · 三形变换大冒险</title>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --teal:#0D9E82;--teal-dark:#077A64;--teal-light:#E0F5EF;--teal-bg:#F0FAF6;
+  --amber:#E8A317;--amber-light:#FFF6DC;
+  --coral:#E06050;--coral-light:#FDE8E4;
+  --violet:#7C5CBF;--violet-light:#EDE7F6;
+  --sky:#3B9FD9;--sky-light:#E1F2FB;
+  --forest:#2A6B4A;
+  --cream:#FAFCF8;--white:#FFFFFF;
+  --bark:#3E3028;--bark-light:#7A6858;
+  --gold:#F2C94C;
+  --green-ok:#43A047;
+  --shadow-s:0 3px 16px rgba(13,90,70,.07);
+  --shadow-m:0 6px 28px rgba(13,90,70,.10);
+  --shadow-l:0 10px 40px rgba(13,90,70,.14);
+  --r:16px;--r-lg:22px;
+}
+
+body{font-family:'Quicksand',sans-serif;background:var(--cream);color:var(--bark);overflow-x:hidden;min-height:100vh;-webkit-tap-highlight-color:transparent}
+
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ================ WELCOME ================ */
+.welcome{
+  align-items:center;justify-content:center;
+  background:linear-gradient(170deg,#E8F5E9 0%,#C8E6C9 25%,#A5D6A7 50%,#81C784 100%);
+  position:relative;overflow:hidden;padding:40px 24px;
+}
+
+.trees{position:absolute;bottom:0;left:0;right:0;height:220px;pointer-events:none;overflow:hidden}
+.tree{position:absolute;bottom:0}
+.tree-trunk{background:#8D6E63;border-radius:4px}
+.tree-crown{background:rgba(46,125,50,.25);border-radius:50%}
+
+.welcome-box{position:relative;z-index:2;text-align:center;max-width:480px}
+
+.w-badge{
+  display:inline-block;padding:6px 18px;border-radius:100px;
+  background:rgba(255,255,255,.55);backdrop-filter:blur(8px);
+  font-size:12px;font-weight:700;color:var(--teal-dark);letter-spacing:1px;margin-bottom:20px;
+}
+
+.w-title{
+  font-size:clamp(38px,9vw,64px);font-weight:700;line-height:1.1;
+  color:var(--forest);margin-bottom:12px;
+}
+
+.w-title em{font-style:normal;color:var(--teal)}
+
+.w-sub{font-size:17px;color:var(--bark-light);font-weight:500;line-height:1.7;margin-bottom:40px}
+.w-sub small{display:block;font-size:13px;margin-top:8px;opacity:.6}
+
+.btn-go{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--teal);color:#fff;border:none;
+  padding:16px 44px;border-radius:100px;font-size:19px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  box-shadow:0 8px 28px rgba(13,158,130,.35);
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.btn-go:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(13,158,130,.45)}
+.btn-go:active{transform:scale(.97)}
+
+/* ================ MAP ================ */
+.map-screen{background:linear-gradient(180deg,#E8F5E9 0%,var(--cream) 100%);padding:0}
+
+.map-top{padding:18px 22px;display:flex;align-items:center;justify-content:space-between}
+.map-h{font-size:21px;font-weight:700;color:var(--bark)}
+.star-pill{display:flex;align-items:center;gap:5px;background:var(--amber-light);padding:7px 14px;border-radius:100px;font-weight:700;color:#D4920C;font-size:15px}
+.star-svg{width:20px;height:20px}
+
+.zones-list{flex:1;padding:6px 18px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+
+.z-card{
+  background:var(--white);border-radius:var(--r-lg);padding:22px;
+  box-shadow:var(--shadow-s);cursor:pointer;display:flex;align-items:center;gap:18px;
+  border:2px solid transparent;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.z-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-m)}
+.z-card:active{transform:scale(.98)}
+.z-card.locked{opacity:.4;pointer-events:none;filter:grayscale(.3)}
+.z-card.done{border-color:var(--green-ok)}
+.z-card.now{border-color:var(--teal);animation:zPulse 2s ease-in-out infinite}
+@keyframes zPulse{0%,100%{box-shadow:var(--shadow-s),0 0 0 0 rgba(13,158,130,.12)}50%{box-shadow:var(--shadow-s),0 0 0 8px rgba(13,158,130,.04)}}
+
+.z-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;font-weight:700}
+.z-body{flex:1}
+.z-name{font-size:17px;font-weight:700;margin-bottom:3px}
+.z-desc{font-size:12px;color:var(--bark-light);font-weight:500}
+
+.z-dots{display:flex;gap:4px;margin-top:8px}
+.z-dot{width:9px;height:9px;border-radius:50%;background:#ddd;transition:.3s}
+.z-dot.on{background:var(--gold)}
+.z-dot.cur{background:var(--teal);animation:dotP 1.4s ease-in-out infinite}
+@keyframes dotP{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+
+.z-right{text-align:right;flex-shrink:0}
+.z-st{font-size:13px;font-weight:700;color:#D4920C}
+
+/* ================ GAME ================ */
+.game-screen{background:var(--cream);padding:0}
+
+.g-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:var(--white);box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.g-back{background:none;border:none;font-size:15px;font-weight:700;color:var(--bark-light);cursor:pointer;font-family:inherit;padding:8px}
+.g-zone{font-size:13px;font-weight:700;color:var(--teal)}
+.g-level{font-size:13px;font-weight:600;color:var(--bark-light)}
+
+.g-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 18px;position:relative}
+
+.g-dots{display:flex;gap:9px;margin-bottom:28px}
+.g-d{width:11px;height:11px;border-radius:50%;background:#ddd;transition:.4s cubic-bezier(.34,1.56,.64,1)}
+.g-d.dn{background:var(--green-ok);transform:scale(1.1)}
+.g-d.ac{background:var(--teal);transform:scale(1.3);box-shadow:0 0 0 4px rgba(13,158,130,.18)}
+
+/* source card */
+.src-card{
+  background:var(--white);border-radius:var(--r-lg);padding:28px;
+  box-shadow:var(--shadow-m);text-align:center;max-width:480px;width:100%;
+  margin-bottom:14px;position:relative;overflow:hidden;
+}
+.src-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--teal),#66BB6A,var(--teal))}
+
+.src-label{font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase}
+.src-value{font-size:clamp(36px,8vw,54px);font-weight:700;color:var(--bark);line-height:1.2;margin-bottom:6px}
+.src-arrow{font-size:14px;color:var(--bark-light);font-weight:600;margin-bottom:4px}
+.src-target{font-size:13px;font-weight:700;color:var(--coral);letter-spacing:.5px}
+
+/* visual bar */
+.vis-bar-wrap{
+  margin:14px auto 24px;max-width:480px;width:100%;
+  background:var(--white);border-radius:var(--r);padding:18px 22px;
+  box-shadow:var(--shadow-s);
+}
+.vis-label{font-size:11px;font-weight:700;color:var(--bark-light);margin-bottom:8px;text-align:left}
+.vis-track{height:28px;background:#EDE7E0;border-radius:14px;overflow:hidden;position:relative}
+.vis-fill{height:100%;border-radius:14px;transition:width .8s cubic-bezier(.34,1.56,.64,1);width:0}
+.vis-pct{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:var(--bark);opacity:0;transition:opacity .4s .6s}
+.vis-pct.show{opacity:1}
+
+/* options */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;width:100%}
+
+.o-btn{
+  background:var(--white);border:2.5px solid #E0DAD2;border-radius:var(--r);
+  padding:18px 14px;font-size:clamp(20px,5vw,28px);font-weight:700;
+  font-family:inherit;color:var(--bark);cursor:pointer;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);position:relative;
+}
+.o-btn:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:var(--shadow-s)}
+.o-btn:active{transform:scale(.96)}
+
+.o-btn.ok{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);animation:okPop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes okPop{0%{transform:scale(.9)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+
+.o-btn.nope{animation:nShake .45s ease;opacity:.35;pointer-events:none}
+@keyframes nShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+
+.o-btn.off{opacity:.3;pointer-events:none}
+
+.g-hint{margin-top:16px;font-size:14px;color:var(--teal-dark);font-weight:600;min-height:22px;max-width:480px;text-align:center;line-height:1.5}
+
+.streak-box{
+  position:fixed;top:72px;right:18px;
+  background:linear-gradient(135deg,var(--amber),var(--gold));
+  color:var(--bark);padding:9px 18px;border-radius:100px;
+  font-weight:700;font-size:14px;box-shadow:var(--shadow-m);z-index:50;
+  display:none;
+}
+.streak-box.on{display:block;animation:sIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sIn{0%{transform:translateX(80px) scale(.5);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+
+/* ================ RESULT ================ */
+.res-screen{
+  align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#E8F5E9 0%,#C8E6C9 50%,#A5D6A7 100%);
+  padding:40px 24px;text-align:center;position:relative;overflow:hidden;
+}
+
+.res-stars{display:flex;gap:12px;margin-bottom:22px}
+.res-s{width:52px;height:52px;opacity:0;transform:scale(0) rotate(-25deg)}
+.res-s.got{animation:sEarn .6s cubic-bezier(.34,1.56,.64,1) forwards}
+.res-s:nth-child(2).got{animation-delay:.2s}
+.res-s:nth-child(3).got{animation-delay:.4s}
+@keyframes sEarn{0%{opacity:0;transform:scale(0) rotate(-25deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.res-s svg{width:100%;height:100%}
+
+.res-t{font-size:30px;font-weight:700;margin-bottom:8px;animation:fUp .6s ease .5s both}
+.res-msg{font-size:15px;color:var(--bark-light);font-weight:500;margin-bottom:10px;animation:fUp .6s ease .6s both;line-height:1.6}
+
+.res-row{display:flex;gap:24px;margin:22px 0 34px;animation:fUp .6s ease .7s both}
+.res-v{font-size:26px;font-weight:700;color:var(--teal)}
+.res-l{font-size:11px;color:var(--bark-light);font-weight:600}
+
+@keyframes fUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.btn-next{
+  background:var(--teal);color:#fff;border:none;padding:15px 42px;border-radius:100px;
+  font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;
+  box-shadow:0 8px 28px rgba(13,158,130,.3);transition:all .3s;animation:fUp .6s ease .8s both;
+}
+.btn-next:hover{transform:translateY(-2px)}
+.btn-next:active{transform:scale(.97)}
+
+.btn-sec{
+  background:transparent;color:var(--bark-light);border:2px solid #C8E0D4;
+  padding:11px 30px;border-radius:100px;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .3s;animation:fUp .6s ease .9s both;margin-top:12px;
+}
+.btn-sec:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ================ PARTICLES ================ */
+.ptc-box{position:fixed;inset:0;pointer-events:none;z-index:1000;overflow:hidden}
+.ptc{position:absolute;border-radius:50%;animation:ptcFly 1s ease-out forwards}
+@keyframes ptcFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+
+.big-ok{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:90px;height:90px;z-index:999;pointer-events:none}
+.big-ok.go{animation:bPop .8s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes bPop{0%{transform:translate(-50%,-50%) scale(0);opacity:0}40%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-50%) scale(0);opacity:0}}
+
+@media(max-width:480px){
+  .src-card{padding:22px 16px}
+  .opts{gap:9px}
+  .o-btn{padding:14px 10px}
+  .z-card{padding:16px;gap:12px}
+  .g-body{padding:20px 14px}
+  .vis-bar-wrap{padding:14px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="ptc-box" id="ptcBox"></div>
+<div class="big-ok" id="bigOk"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#43A047"/><path d="M30 52L45 67L72 35" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+<!-- ======== WELCOME ======== -->
+<div class="screen welcome active" id="scnWelcome">
+  <div class="trees">
+    <div class="tree" style="left:5%"><div class="tree-crown" style="width:70px;height:70px;margin-left:-10px;margin-bottom:-10px"></div><div class="tree-trunk" style="width:12px;height:80px;margin:0 auto"></div></div>
+    <div class="tree" style="left:25%"><div class="tree-crown" style="width:90px;height:90px;margin-left:-15px;margin-bottom:-12px"></div><div class="tree-trunk" style="width:14px;height:100px;margin:0 auto"></div></div>
+    <div class="tree" style="right:20%"><div class="tree-crown" style="width:80px;height:80px;margin-left:-12px;margin-bottom:-10px"></div><div class="tree-trunk" style="width:12px;height:90px;margin:0 auto"></div></div>
+    <div class="tree" style="right:3%"><div class="tree-crown" style="width:60px;height:60px;margin-left:-8px;margin-bottom:-8px"></div><div class="tree-trunk" style="width:10px;height:70px;margin:0 auto"></div></div>
+  </div>
+  <div class="welcome-box">
+    <div class="w-badge">U → E 阶段</div>
+    <h1 class="w-title">分数<em>森林</em></h1>
+    <p class="w-sub">分数、小数、百分比——其实是同一个数字的三种面貌<small>答错了不要紧，每道题都有视觉提示帮你理解</small></p>
+    <button class="btn-go" onclick="enterMap()">走进森林 →</button>
+  </div>
+</div>
+
+<!-- ======== MAP ======== -->
+<div class="screen map-screen" id="scnMap">
+  <div class="map-top">
+    <h2 class="map-h">森林地图</h2>
+    <div class="star-pill"><svg class="star-svg" viewBox="0 0 24 24" fill="#F2C94C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span id="allStars">0</span></div>
+  </div>
+  <div class="zones-list" id="zonesList"></div>
+</div>
+
+<!-- ======== GAME ======== -->
+<div class="screen game-screen" id="scnGame">
+  <div class="g-head">
+    <button class="g-back" onclick="toMap()">← 返回</button>
+    <span class="g-zone" id="gZone"></span>
+    <span class="g-level" id="gLvl"></span>
+  </div>
+  <div class="g-body">
+    <div class="g-dots" id="gDots"></div>
+    <div class="src-card">
+      <div class="src-label" id="srcLabel"></div>
+      <div class="src-value" id="srcVal"></div>
+      <div class="src-arrow">▼ 转换为 ▼</div>
+      <div class="src-target" id="srcTgt"></div>
+    </div>
+    <div class="vis-bar-wrap">
+      <div class="vis-label" id="visLabel">数值可视化</div>
+      <div class="vis-track">
+        <div class="vis-fill" id="visFill"></div>
+        <div class="vis-pct" id="visPct"></div>
+      </div>
+    </div>
+    <div class="opts" id="optsGrid"></div>
+    <div class="g-hint" id="gHint"></div>
+  </div>
+  <div class="streak-box" id="streakBox"></div>
+</div>
+
+<!-- ======== RESULT ======== -->
+<div class="screen res-screen" id="scnRes">
+  <div class="res-stars" id="resStars"></div>
+  <h2 class="res-t" id="resT"></h2>
+  <p class="res-msg" id="resMsg"></p>
+  <div class="res-row">
+    <div><div class="res-v" id="rvOk">0</div><div class="res-l">答对</div></div>
+    <div><div class="res-v" id="rvSt">0</div><div class="res-l">最长连击</div></div>
+  </div>
+  <button class="btn-next" id="btnNxt" onclick="goNext()">继续探索</button>
+  <button class="btn-sec" onclick="toMap()">返回地图</button>
+</div>
+
+<script>
+/* ==========================================================
+   CONVERSION DATA BANK
+   ========================================================== */
+const BANK = [
+  {frac:'1/2',  dec:'0.5',   pct:'50%',  val:.5},
+  {frac:'1/4',  dec:'0.25',  pct:'25%',  val:.25},
+  {frac:'3/4',  dec:'0.75',  pct:'75%',  val:.75},
+  {frac:'1/5',  dec:'0.2',   pct:'20%',  val:.2},
+  {frac:'2/5',  dec:'0.4',   pct:'40%',  val:.4},
+  {frac:'3/5',  dec:'0.6',   pct:'60%',  val:.6},
+  {frac:'4/5',  dec:'0.8',   pct:'80%',  val:.8},
+  {frac:'1/10', dec:'0.1',   pct:'10%',  val:.1},
+  {frac:'3/10', dec:'0.3',   pct:'30%',  val:.3},
+  {frac:'7/10', dec:'0.7',   pct:'70%',  val:.7},
+  {frac:'9/10', dec:'0.9',   pct:'90%',  val:.9},
+  {frac:'1/3',  dec:'0.333...', pct:'33.3%', val:1/3},
+  {frac:'2/3',  dec:'0.667...', pct:'66.7%', val:2/3},
+  {frac:'1/8',  dec:'0.125', pct:'12.5%', val:.125},
+  {frac:'3/8',  dec:'0.375', pct:'37.5%', val:.375},
+  {frac:'5/8',  dec:'0.625', pct:'62.5%', val:.625},
+  {frac:'7/8',  dec:'0.875', pct:'87.5%', val:.875},
+  {frac:'1/20', dec:'0.05',  pct:'5%',   val:.05},
+  {frac:'1/100',dec:'0.01',  pct:'1%',   val:.01},
+  {frac:'1/1',  dec:'1.0',   pct:'100%', val:1},
+];
+
+const FORM_LABELS = {frac:'分数', dec:'小数', pct:'百分比'};
+const FORM_COLORS = {frac:'var(--teal)', dec:'var(--sky)', pct:'var(--coral)'};
+
+/* ==========================================================
+   ZONES
+   ========================================================== */
+const ZONES = [
+  {
+    id:'fd', name:'半数草地', desc:'分数 → 小数，从最简单的开始',
+    color:'#0D9E82', bg:'#E0F5EF', icon:'½',
+    levels:6, pool:[0,1,2,3,4,5,6],
+    fromKey:'frac', toKey:'dec',
+    tierByLvl(l){return l<2?[0,1,2]:l<4?[0,1,2,3,4,5,6]:[0,1,2,3,4,5,6,7,8,9,10]}
+  },
+  {
+    id:'fp', name:'比例花园', desc:'分数 → 百分比，看清它的真面目',
+    color:'#E06050', bg:'#FDE8E4', icon:'%',
+    levels:6, pool:[0,1,2,3,7,8,9,10],
+    fromKey:'frac', toKey:'pct',
+    tierByLvl(l){return l<2?[0,1,2]:l<4?[0,1,2,3,4,5,6]:[0,1,2,3,4,5,6,7,8,9,10]}
+  },
+  {
+    id:'dp', name:'小数瀑布', desc:'小数 → 百分比，移动小数点的魔法',
+    color:'#3B9FD9', bg:'#E1F2FB', icon:'.0',
+    levels:6, pool:[0,1,2,3,4,5,6,7,8,9,10],
+    fromKey:'dec', toKey:'pct',
+    tierByLvl(l){return l<2?[0,1,2,7]:l<4?[0,1,2,3,4,5,6,7,8,9,10]:[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16]}
+  },
+  {
+    id:'pf', name:'逆流溪谷', desc:'百分比 → 分数，反向变换',
+    color:'#7C5CBF', bg:'#EDE7F6', icon:'⅓',
+    levels:6, pool:[0,1,2,3,4,5,6,7,8,9,10],
+    fromKey:'pct', toKey:'frac',
+    tierByLvl(l){return l<2?[0,1,2]:l<4?[0,1,2,3,4,5,6]:[0,1,2,3,4,5,6,7,8,9,10,17]}
+  },
+  {
+    id:'mx', name:'三形神殿', desc:'全方向自由变换，终极挑战',
+    color:'#E8A317', bg:'#FFF6DC', icon:'⇄',
+    levels:8,
+    fromKey:null, toKey:null,
+    tierByLvl(l){
+      if(l<2) return [0,1,2,3];
+      if(l<4) return [0,1,2,3,4,5,6,7,8,9,10];
+      return [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19];
+    }
+  }
+];
+
+const QPL = 5;
+
+const CHEERS = [
+  '太棒了！分数和小数是你的好朋友了！',
+  '完美！你已经能看穿数字的三种面貌！',
+  '了不起的探索家！继续前进吧！',
+  '每一次正确都在让你变得更强！',
+  '你的转换速度越来越快了！',
+  '数字世界因你而更加精彩！',
+  '就是这种感觉！你在成长！',
+  '森林里最闪亮的冒险者就是你！'
+];
+
+const OK_WORDS = ['正确!','太棒了!','完美!','漂亮!','没错!','就是这样!','好厉害!','答对啦!'];
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+let st = loadSt();
+function defaultSt(){return{zones:ZONES.map(z=>({id:z.id,levels:Array(z.levels).fill(0)})),total:0}}
+function loadSt(){try{const s=JSON.parse(localStorage.getItem('fracForest'));if(s&&s.zones)return s}catch(e){}return defaultSt()}
+function saveSt(){st.total=st.zones.reduce((a,z)=>a+z.levels.reduce((s,v)=>s+v,0),0);localStorage.setItem('fracForest',JSON.stringify(st))}
+
+let cZone=0, cLvl=0, qs=[], qi=0, correct=0, streak=0, maxSt=0, attempts=0, answered=false;
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function shuf(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=ri(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+/* ==========================================================
+   PARTICLES
+   ========================================================== */
+function burst(x,y,n=20){
+  const box=document.getElementById('ptcBox');
+  const cs=['#0D9E82','#E8A317','#F2C94C','#43A047','#3B9FD9','#E06050','#7C5CBF'];
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='ptc';
+    const sz=ri(5,13),ang=(Math.PI*2*i)/n+Math.random()*.5,d=ri(50,160);
+    const tx=Math.cos(ang)*d,ty=Math.sin(ang)*d-35;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${cs[i%cs.length]};left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px`;
+    box.appendChild(p);setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function showCheck(){const e=document.getElementById('bigOk');e.classList.remove('go');void e.offsetWidth;e.classList.add('go');setTimeout(()=>e.classList.remove('go'),900)}
+
+function updStreak(){
+  const b=document.getElementById('streakBox');
+  if(streak>=3){b.textContent=`🔥 连击 ×${streak}`;b.classList.add('on');b.style.animation='none';void b.offsetWidth;b.style.animation=''}
+  else b.classList.remove('on');
+}
+
+/* ==========================================================
+   GENERATE QUESTIONS
+   ========================================================== */
+function genQ(zone, lvl){
+  const tier = zone.tierByLvl ? zone.tierByLvl(lvl) : zone.pool || [];
+  const isMix = zone.id === 'mx';
+  const questions = [];
+
+  for(let i=0; i<QPL; i++){
+    const idx = tier[ri(0, tier.length-1)];
+    const entry = BANK[idx];
+
+    let fromKey, toKey;
+    if(isMix){
+      const pairs = [['frac','dec'],['frac','pct'],['dec','pct'],['pct','frac'],['dec','frac'],['pct','dec']];
+      const pair = pairs[ri(0,pairs.length-1)];
+      fromKey = pair[0]; toKey = pair[1];
+    } else {
+      fromKey = zone.fromKey; toKey = zone.toKey;
+    }
+
+    const srcVal = entry[fromKey];
+    const ansVal = entry[toKey];
+
+    // Generate distractors from same form
+    const distSet = new Set([ansVal]);
+    let safe = 0;
+    while(distSet.size < 4 && safe < 50){
+      const dIdx = tier[ri(0, tier.length-1)];
+      if(dIdx !== idx) distSet.add(BANK[dIdx][toKey]);
+      safe++;
+    }
+    // Fill with random bank entries if needed
+    safe = 0;
+    while(distSet.size < 4 && safe < 50){
+      const dIdx = ri(0, BANK.length-1);
+      if(dIdx !== idx) distSet.add(BANK[dIdx][toKey]);
+      safe++;
+    }
+
+    const hint = buildHint(entry, fromKey, toKey);
+
+    questions.push({
+      srcLabel: FORM_LABELS[fromKey],
+      srcValue: srcVal,
+      tgtLabel: FORM_LABELS[toKey],
+      answer: ansVal,
+      options: shuf([...distSet]),
+      val: entry.val,
+      hint: hint,
+      fromKey, toKey,
+      entry
+    });
+  }
+  return questions;
+}
+
+function buildHint(entry, from, to){
+  const f = entry.frac, d = entry.dec, p = entry.pct;
+  if(from==='frac' && to==='dec') return `${f} 就是 ${f.split('/')[0]} ÷ ${f.split('/')[1]}，算一算等于多少`;
+  if(from==='frac' && to==='pct') return `先把 ${f} 变成小数 ${d}，再乘以 100 加上 %`;
+  if(from==='dec' && to==='pct') return `小数变百分比：${d} × 100 = ${p}，小数点右移两位`;
+  if(from==='pct' && to==='frac') return `${p} 的意思是"每一百份中占 ${parseFloat(p)} 份"`;
+  if(from==='dec' && to==='frac') return `${d} 读作"零点几"，想想它是几分之几`;
+  if(from==='pct' && to==='dec') return `百分比变小数：去掉 %，小数点左移两位`;
+  return `仔细看看数值条，它们表示的量是一样的`;
+}
+
+/* ==========================================================
+   RENDER MAP
+   ========================================================== */
+function renderMap(){
+  const list = document.getElementById('zonesList');
+  list.innerHTML = '';
+  document.getElementById('allStars').textContent = st.total;
+
+  ZONES.forEach((z,zi)=>{
+    const zs = st.zones[zi];
+    const done = zs.levels.filter(v=>v>0).length;
+    const zStars = zs.levels.reduce((a,v)=>a+v,0);
+    const prevOk = zi===0 || st.zones[zi-1].levels.filter(v=>v>0).length >= Math.ceil(ZONES[zi-1].levels*.5);
+    const unlocked = prevOk;
+    const complete = done === z.levels;
+    const current = unlocked && !complete;
+
+    const card = document.createElement('div');
+    card.className = `z-card${!unlocked?' locked':''}${complete?' done':''}${current?' now':''}`;
+    card.innerHTML = `
+      <div class="z-icon" style="background:${z.bg};color:${z.color}"><span>${z.icon}</span></div>
+      <div class="z-body">
+        <div class="z-name" style="color:${unlocked?z.color:'#999'}">${z.name}</div>
+        <div class="z-desc">${unlocked?z.desc:'完成前面的区域解锁'}</div>
+        <div class="z-dots">${zs.levels.map((v,li)=>{
+          const d=v>0;const c=!d&&(li===0||zs.levels[li-1]>0);
+          return `<div class="z-dot${d?' on':''}${c?' cur':''}"></div>`;
+        }).join('')}</div>
+      </div>
+      <div class="z-right"><div class="z-st">${zStars}/${z.levels*3}</div></div>`;
+    if(unlocked) card.onclick=()=>openZone(zi);
+    list.appendChild(card);
+  });
+}
+
+function openZone(zi){
+  cZone=zi;
+  const zs=st.zones[zi];
+  let l=zs.levels.findIndex(v=>v===0);if(l===-1)l=0;
+  startLvl(l);
+}
+
+/* ==========================================================
+   GAME PLAY
+   ========================================================== */
+function startLvl(l){
+  cLvl=l; qi=0; correct=0; streak=0; maxSt=0; attempts=0; answered=false;
+  const z=ZONES[cZone];
+  qs=genQ(z,l);
+  document.getElementById('gZone').textContent=z.name;
+  document.getElementById('gZone').style.color=z.color;
+  document.getElementById('gLvl').textContent=`第 ${l+1} 关`;
+  show('scnGame');
+  renderQ();
+}
+
+function renderQ(){
+  answered=false;
+  const q=qs[qi];
+
+  // dots
+  const dots=document.getElementById('gDots');
+  dots.innerHTML='';
+  for(let i=0;i<QPL;i++){
+    const d=document.createElement('div');
+    d.className=`g-d${i<qi?' dn':''}${i===qi?' ac':''}`;
+    dots.appendChild(d);
+  }
+
+  // source
+  document.getElementById('srcLabel').textContent=q.srcLabel;
+  document.getElementById('srcVal').textContent=q.srcValue;
+  document.getElementById('srcTgt').textContent=`转换为 → ${q.tgtLabel}`;
+
+  // visual bar - show source fill
+  const fill=document.getElementById('visFill');
+  const pctEl=document.getElementById('visPct');
+  const zone=ZONES[cZone];
+  fill.style.background=zone.color;
+  fill.style.width='0%';
+  pctEl.classList.remove('show');
+  pctEl.textContent='';
+  document.getElementById('visLabel').textContent=`${q.srcValue} 的大小`;
+  setTimeout(()=>{
+    fill.style.width=`${Math.round(q.val*100)}%`;
+    pctEl.textContent=`${Math.round(q.val*1000)/10}%`;
+    pctEl.classList.add('show');
+  },200);
+
+  // hint
+  document.getElementById('gHint').textContent='';
+
+  // options
+  const grid=document.getElementById('optsGrid');
+  grid.innerHTML='';
+  q.options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='o-btn';
+    btn.textContent=opt;
+    btn.onclick=(e)=>handleAns(opt,q,btn,e);
+    grid.appendChild(btn);
+  });
+
+  updStreak();
+}
+
+function handleAns(chosen, q, btn, ev){
+  if(answered) return;
+  attempts++;
+
+  if(chosen===q.answer){
+    answered=true;
+    correct++;
+    streak++;
+    if(streak>maxSt) maxSt=streak;
+
+    btn.classList.add('ok');
+    document.querySelectorAll('.o-btn').forEach(b=>{if(!b.classList.contains('ok'))b.classList.add('off')});
+
+    const r=btn.getBoundingClientRect();
+    burst(r.left+r.width/2,r.top+r.height/2,streak>=3?28:16);
+    showCheck();
+    updStreak();
+
+    document.getElementById('gHint').textContent=OK_WORDS[ri(0,OK_WORDS.length-1)];
+    document.getElementById('gHint').style.color='var(--green-ok)';
+
+    // show equivalence on bar
+    const pctEl=document.getElementById('visPct');
+    pctEl.textContent=`${q.srcValue} = ${q.answer}`;
+    pctEl.classList.add('show');
+
+    setTimeout(()=>{
+      qi++;
+      if(qi>=QPL) finishLvl();
+      else renderQ();
+    },1400);
+
+  } else {
+    streak=0;
+    updStreak();
+    btn.classList.add('nope');
+    document.getElementById('gHint').textContent=`💡 ${q.hint}`;
+    document.getElementById('gHint').style.color='var(--teal-dark)';
+  }
+}
+
+/* ==========================================================
+   RESULT
+   ========================================================== */
+function finishLvl(){
+  let stars;
+  if(attempts<=QPL) stars=3;
+  else if(attempts<=QPL+2) stars=2;
+  else stars=1;
+
+  const prev=st.zones[cZone].levels[cLvl];
+  if(stars>prev){st.zones[cZone].levels[cLvl]=stars;saveSt()}
+
+  const starsEl=document.getElementById('resStars');
+  starsEl.innerHTML='';
+  for(let i=0;i<3;i++){
+    const s=document.createElement('div');
+    s.className=`res-s${i<stars?' got':''}`;
+    s.innerHTML=`<svg viewBox="0 0 24 24" fill="${i<stars?'#F2C94C':'#DDD5CA'}"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+    starsEl.appendChild(s);
+  }
+
+  const ts=['做到了！','太棒了！','完美通关！'];
+  document.getElementById('resT').textContent=ts[Math.min(stars-1,2)];
+  document.getElementById('resMsg').textContent=CHEERS[ri(0,CHEERS.length-1)];
+  document.getElementById('rvOk').textContent=`${correct}/${QPL}`;
+  document.getElementById('rvSt').textContent=maxSt;
+
+  const hasNext=cLvl+1<ZONES[cZone].levels;
+  const btn=document.getElementById('btnNxt');
+  btn.textContent=hasNext?'继续探索':'返回地图';
+  btn.onclick=hasNext?goNext:toMap;
+
+  show('scnRes');
+  setTimeout(()=>burst(window.innerWidth/2,window.innerHeight/3,35),500);
+}
+
+function goNext(){if(cLvl+1<ZONES[cZone].levels)startLvl(cLvl+1);else toMap()}
+
+/* ==========================================================
+   NAV
+   ========================================================== */
+function enterMap(){show('scnMap');renderMap()}
+function toMap(){show('scnMap');renderMap()}
+
+/* INIT */
+saveSt();
+</script>
+</body>
+</html>

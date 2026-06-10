@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>配方工作室 · Completing the Square</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#0E7490;--cyan-mid:#0891B2;--cyan-lt:#CFFAFE;
+  --orange:#C2410C;--orange-lt:#FFF7ED;
+  --violet:#6D28D9;--violet-lt:#EDE9FE;
+  --rose:#BE123C;--rose-lt:#FFF1F3;
+  --blue:#1D4ED8;--blue-lt:#EFF6FF;
+  --amber:#B45309;--amber-lt:#FEF3C7;
+  --slate:#1E293B;--slate-m:#64748B;
+  --bg:#F0FCFF;--white:#FFF;
+  --gold:#FBBF24;--green:#16A34A;--green-lt:#DCFCE7;
+  --shadow-s:0 2px 12px rgba(8,145,178,.07);
+  --shadow-m:0 6px 24px rgba(8,145,178,.11);
+  --r:14px;--r-lg:20px;
+}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--slate);overflow-x:hidden;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.screen{display:none;min-height:100vh;flex-direction:column}.screen.active{display:flex}
+.welcome{align-items:center;justify-content:center;background:linear-gradient(155deg,#CFFAFE 0%,#A5F3FC 30%,#67E8F9 60%,#22D3EE 100%);padding:40px 24px}
+.w-box{position:relative;z-index:2;text-align:center;max-width:520px}
+.w-badge{display:inline-block;padding:6px 16px;border-radius:100px;background:rgba(8,145,178,.1);border:1px solid rgba(8,145,178,.2);font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:1.5px;margin-bottom:20px}
+.w-title{font-size:clamp(30px,7.5vw,50px);font-weight:700;line-height:1.08;color:var(--slate);margin-bottom:10px}
+.w-title em{font-style:normal;color:var(--cyan)}
+.w-formula{margin:14px auto 8px;max-width:400px;background:var(--white);border-radius:var(--r-lg);padding:14px 18px;box-shadow:var(--shadow-m);font-family:'JetBrains Mono',monospace;font-size:clamp(13px,3.4vw,16px);font-weight:700}
+.w-formula .half{color:var(--orange)}.w-formula .sq{color:var(--rose)}
+.w-vars{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:12px 0 20px}
+.w-var{width:34px;height:34px;border-radius:9px;background:var(--white);box-shadow:var(--shadow-s);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700}
+.w-sub{font-size:15px;color:var(--slate-m);font-weight:500;line-height:1.7;margin-bottom:36px}
+.w-sub small{display:block;font-size:13px;margin-top:6px;opacity:.6}
+.btn-go{display:inline-flex;align-items:center;gap:10px;background:var(--cyan-mid);color:#fff;border:none;padding:16px 42px;border-radius:100px;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 8px 28px rgba(8,145,178,.3);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.btn-go:hover{transform:translateY(-3px)}.btn-go:active{transform:scale(.97)}
+.map-s{background:linear-gradient(180deg,var(--cyan-lt) 0%,var(--bg) 100%);padding:0}
+.m-top{padding:18px 22px;display:flex;align-items:center;justify-content:space-between}
+.m-h{font-size:20px;font-weight:700}.m-st{display:flex;align-items:center;gap:5px;background:var(--amber-lt);padding:7px 14px;border-radius:100px;font-weight:700;color:var(--amber);font-size:14px}
+.m-list{flex:1;padding:6px 18px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.zc{background:var(--white);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow-s);cursor:pointer;display:flex;align-items:center;gap:14px;border:2px solid transparent;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.zc:hover{transform:translateY(-2px);box-shadow:var(--shadow-m)}.zc:active{transform:scale(.98)}
+.zc.lk{opacity:.4;pointer-events:none;filter:grayscale(.3)}.zc.dn{border-color:var(--green)}.zc.nw{border-color:var(--cyan-mid);animation:zcP 2s ease-in-out infinite}
+@keyframes zcP{0%,100%{box-shadow:var(--shadow-s),0 0 0 0 rgba(8,145,178,.1)}50%{box-shadow:var(--shadow-s),0 0 0 8px rgba(8,145,178,.04)}}
+.zi{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;font-family:'JetBrains Mono',monospace;text-align:center;line-height:1.1}
+.zb{flex:1}.zn{font-size:15px;font-weight:700;margin-bottom:2px}.zd{font-size:11px;color:var(--slate-m);font-weight:500}
+.zdots{display:flex;gap:4px;margin-top:6px}.zdt{width:8px;height:8px;border-radius:50%;background:#E2E8F0;transition:.3s}.zdt.on{background:var(--gold)}.zdt.cu{background:var(--cyan-mid);animation:dp 1.4s ease-in-out infinite}
+@keyframes dp{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+.zr{flex-shrink:0}.zsv{font-size:12px;font-weight:700;color:var(--amber)}
+.game-s{background:var(--bg);padding:0}
+.gh{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;background:var(--white);box-shadow:0 1px 8px rgba(0,0,0,.03)}
+.gh-b{background:none;border:none;font-size:14px;font-weight:600;color:var(--slate-m);cursor:pointer;font-family:inherit;padding:8px}
+.gh-z{font-size:12px;font-weight:700;color:var(--cyan-mid)}
+.gh-l{font-size:12px;font-weight:600;color:var(--slate-m)}
+.gbd{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 12px 20px;overflow-y:auto}
+.gds{display:flex;gap:8px;margin-bottom:10px}
+.gd{width:10px;height:10px;border-radius:50%;background:#E2E8F0;transition:.4s cubic-bezier(.34,1.56,.64,1)}.gd.done{background:var(--green);transform:scale(1.1)}.gd.act{background:var(--cyan-mid);transform:scale(1.3);box-shadow:0 0 0 4px rgba(8,145,178,.18)}
+.q-card{background:var(--white);border-radius:var(--r);padding:15px 16px;box-shadow:var(--shadow-s);text-align:center;max-width:460px;width:100%;margin-bottom:8px;position:relative;overflow:hidden}
+.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan-mid),var(--orange),var(--rose))}
+.q-lbl{font-size:10px;font-weight:700;color:var(--cyan-mid);letter-spacing:1px;margin-bottom:5px}
+.q-expr{font-family:'JetBrains Mono',monospace;font-size:clamp(17px,4.4vw,23px);font-weight:700;color:var(--slate);line-height:1.5;word-break:break-word}
+.q-task{font-size:12px;font-weight:600;color:var(--orange);margin-top:5px}
+/* half-square hint card */
+.hs-card{background:var(--white);border-radius:var(--r);padding:11px 16px;box-shadow:var(--shadow-s);max-width:460px;width:100%;margin-bottom:8px;display:none}
+.hs-lbl{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px;margin-bottom:5px;text-align:center}
+.hs-flow{display:flex;align-items:center;justify-content:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:clamp(13px,3.4vw,16px);font-weight:700;flex-wrap:wrap}
+.hs-box{padding:6px 14px;border-radius:8px;opacity:0;transform:scale(.8);transition:all .4s cubic-bezier(.34,1.56,.64,1)}
+.hs-box.show{opacity:1;transform:scale(1)}
+.hs-b{background:var(--cyan-lt);color:var(--cyan)}
+.hs-half{background:var(--orange-lt);color:var(--orange)}
+.hs-sq{background:var(--rose-lt);color:var(--rose)}
+.hs-arrow{font-size:11px;color:var(--slate-m);font-weight:600;opacity:0;transition:opacity .4s ease}
+.hs-arrow.show{opacity:1}
+/* canvas area model */
+.vis-wrap{width:100%;max-width:460px;background:var(--white);border-radius:var(--r-lg);box-shadow:var(--shadow-m);padding:10px;margin-bottom:8px}
+.vis-cv{display:block;width:100%;border-radius:8px}
+.vis-cap{text-align:center;font-size:11px;font-weight:600;color:var(--slate-m);margin-top:4px}
+.step-panel{width:100%;max-width:460px;background:var(--white);border-radius:var(--r);box-shadow:var(--shadow-s);margin-bottom:10px;overflow:hidden;display:none}
+.step-title{padding:8px 14px;font-size:11px;font-weight:700;color:var(--cyan-mid);letter-spacing:.5px;border-bottom:1px solid var(--cyan-lt)}
+.step-body{padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;color:var(--slate)}
+.step-ln{opacity:0;transform:translateY(8px);transition:all .4s ease}.step-ln.show{opacity:1;transform:translateY(0)}
+.step-num{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--cyan-lt);color:var(--cyan);font-size:9px;font-weight:700;text-align:center;line-height:18px;margin-right:6px;font-family:'Space Grotesk',sans-serif}
+.step-ok{color:var(--green);font-weight:700}.step-half{color:var(--orange);font-weight:700}.step-sq{color:var(--rose);font-weight:700}
+.info-box{width:100%;max-width:460px;background:var(--white);border-radius:var(--r);padding:10px 14px;box-shadow:var(--shadow-s);margin-bottom:10px;min-height:36px;display:flex;align-items:center;justify-content:center;text-align:center}
+.info-text{font-size:12px;font-weight:600;color:var(--slate-m);line-height:1.5}.info-text strong{font-weight:700;color:var(--cyan)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:460px;width:100%}
+.opts.s1{grid-template-columns:1fr}
+.ob{background:var(--white);border:2px solid #A5F3FC;border-radius:var(--r);padding:13px 10px;font-size:clamp(12px,3vw,15px);font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--slate);cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);text-align:center;line-height:1.3;word-break:break-word}
+.ob:hover{border-color:var(--cyan-mid);transform:translateY(-2px);box-shadow:var(--shadow-s)}.ob:active{transform:scale(.96)}
+.ob.ok{background:var(--green-lt);border-color:var(--green);color:#166534;animation:okP .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes okP{0%{transform:scale(.9)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+.ob.nope{animation:nSh .45s ease;opacity:.3;pointer-events:none}
+@keyframes nSh{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.ob.off{opacity:.25;pointer-events:none}
+.g-hint{margin-top:8px;font-size:12px;color:var(--cyan);font-weight:600;min-height:18px;max-width:460px;text-align:center;line-height:1.5}
+.streak-bx{position:fixed;top:64px;right:14px;background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--slate);padding:6px 14px;border-radius:100px;font-weight:700;font-size:12px;box-shadow:var(--shadow-m);z-index:50;display:none}
+.streak-bx.on{display:block;animation:sbI .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sbI{0%{transform:translateX(80px) scale(.5);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+.res-s{align-items:center;justify-content:center;background:linear-gradient(155deg,#CFFAFE 0%,#A5F3FC 50%,#67E8F9 100%);padding:40px 24px;text-align:center;overflow:hidden}
+.rs-st{display:flex;gap:12px;margin-bottom:20px}
+.rs{width:48px;height:48px;opacity:0;transform:scale(0) rotate(-25deg)}.rs.got{animation:sE .6s cubic-bezier(.34,1.56,.64,1) forwards}
+.rs:nth-child(2).got{animation-delay:.2s}.rs:nth-child(3).got{animation-delay:.4s}
+@keyframes sE{0%{opacity:0;transform:scale(0) rotate(-25deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.rs svg{width:100%;height:100%}
+.rs-t{font-size:26px;font-weight:700;margin-bottom:6px;animation:fU .6s ease .5s both}
+.rs-msg{font-size:14px;color:var(--slate-m);font-weight:500;margin-bottom:10px;animation:fU .6s ease .6s both;line-height:1.6}
+.rs-row{display:flex;gap:24px;margin:20px 0 30px;animation:fU .6s ease .7s both}
+.rv{font-size:22px;font-weight:700;color:var(--cyan-mid)}.rl{font-size:11px;color:var(--slate-m);font-weight:600}
+@keyframes fU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.btn-n{background:var(--cyan-mid);color:#fff;border:none;padding:14px 40px;border-radius:100px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 8px 24px rgba(8,145,178,.3);transition:all .3s;animation:fU .6s ease .8s both}
+.btn-n:hover{transform:translateY(-2px)}.btn-n:active{transform:scale(.97)}
+.btn-s2{background:transparent;color:var(--slate-m);border:2px solid rgba(8,145,178,.2);padding:10px 26px;border-radius:100px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .3s;animation:fU .6s ease .9s both;margin-top:10px}
+.btn-s2:hover{border-color:var(--cyan-mid);color:var(--cyan-mid)}
+.ptc-b{position:fixed;inset:0;pointer-events:none;z-index:1000;overflow:hidden}
+.ptc{position:absolute;border-radius:50%;animation:ptcF 1s ease-out forwards}
+@keyframes ptcF{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+.big-ok{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:84px;height:84px;z-index:999;pointer-events:none}
+.big-ok.go{animation:bP .8s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes bP{0%{transform:translate(-50%,-50%) scale(0);opacity:0}40%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-50%) scale(0);opacity:0}}
+@media(max-width:480px){.vis-wrap{padding:6px}.opts{gap:6px}.ob{padding:11px 6px;font-size:clamp(11px,2.8vw,13px)}}
+</style>
+</head>
+<body>
+<div class="ptc-b" id="ptcB"></div>
+<div class="big-ok" id="bigOk"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#16A34A"/><path d="M30 52L45 67L72 35" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+<div class="screen welcome active" id="scnW">
+  <div class="w-box">
+    <div class="w-badge">U → E · EDEXCEL PURE 1</div>
+    <h1 class="w-title">配方<em>工作室</em></h1>
+    <div class="w-formula">v² + bv + c = (v + <span class="half">b/2</span>)² − <span class="sq">(b/2)²</span> + c</div>
+    <div class="w-vars">
+      <div class="w-var" style="color:#0E7490">t</div>
+      <div class="w-var" style="color:#C2410C">p</div>
+      <div class="w-var" style="color:#6D28D9">m</div>
+      <div class="w-var" style="color:#BE123C">u</div>
+      <div class="w-var" style="color:#1D4ED8">w</div>
+      <div class="w-var" style="color:#B45309">k</div>
+    </div>
+    <p class="w-sub">取系数的一半，平方后补上再减去——任何字母都一样<small>这是二次函数顶点式和圆标准方程的基础技能</small></p>
+    <button class="btn-go" onclick="enterMap()">开始配方 →</button>
+  </div>
+</div>
+
+<div class="screen map-s" id="scnM">
+  <div class="m-top"><h2 class="m-h">工作室地图</h2><div class="m-st"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span id="allSt">0</span></div></div>
+  <div class="m-list" id="mL"></div>
+</div>
+
+<div class="screen game-s" id="scnG">
+  <div class="gh"><button class="gh-b" onclick="toMap()">← 返回</button><span class="gh-z" id="ghZ"></span><span class="gh-l" id="ghL"></span></div>
+  <div class="gbd">
+    <div class="gds" id="gDs"></div>
+    <div class="q-card"><div class="q-lbl" id="qLbl">COMPLETE THE SQUARE</div><div class="q-expr" id="qExpr"></div><div class="q-task" id="qTask"></div></div>
+    <div class="hs-card" id="hsCard"><div class="hs-lbl">关键一步 · Half then Square</div><div class="hs-flow" id="hsFlow"></div></div>
+    <div class="vis-wrap" id="visWrap"><canvas class="vis-cv" id="vCv"></canvas><div class="vis-cap" id="visCap">面积模型：补全这个正方形</div></div>
+    <div class="step-panel" id="stP"><div class="step-title">配方步骤 · Working</div><div class="step-body" id="stB"></div></div>
+    <div class="info-box"><div class="info-text" id="iTxt"></div></div>
+    <div class="opts" id="optsG"></div>
+    <div class="g-hint" id="gHint"></div>
+  </div>
+  <div class="streak-bx" id="strkB"></div>
+</div>
+
+<div class="screen res-s" id="scnR">
+  <div class="rs-st" id="rsSt"></div>
+  <h2 class="rs-t" id="rsT"></h2>
+  <p class="rs-msg" id="rsMsg"></p>
+  <div class="rs-row"><div><div class="rv" id="rvO">0</div><div class="rl">答对</div></div><div><div class="rv" id="rvS">0</div><div class="rl">最长连击</div></div></div>
+  <button class="btn-n" id="btnN" onclick="goNxt()">继续配方</button>
+  <button class="btn-s2" onclick="toMap()">返回地图</button>
+</div>
+
+<script>
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function rnz(a,b){var v;do{v=ri(a,b)}while(v===0);return v}
+function shuf(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=ri(0,i);var t=r[i];r[i]=r[j];r[j]=t}return r}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
+function burst(x,y,n){n=n||20;var box=document.getElementById('ptcB');var cs=['#0891B2','#C2410C','#6D28D9','#BE123C','#FBBF24','#16A34A'];for(var i=0;i<n;i++){var p=document.createElement('div');p.className='ptc';var sz=ri(5,11),ang=(Math.PI*2*i)/n+Math.random()*.5,d=ri(50,140);p.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+cs[i%cs.length]+';left:'+x+'px;top:'+y+'px;--tx:'+Math.cos(ang)*d+'px;--ty:'+(Math.sin(ang)*d-30)+'px';box.appendChild(p);setTimeout((function(el){return function(){el.remove()}})(p),1000)}}
+function showCk(){var e=document.getElementById('bigOk');e.classList.remove('go');void e.offsetWidth;e.classList.add('go');setTimeout(function(){e.classList.remove('go')},900)}
+function updStrk(){var b=document.getElementById('strkB');if(streak>=3){b.textContent='🔥 ×'+streak;b.classList.add('on');b.style.animation='none';void b.offsetWidth;b.style.animation=''}else b.classList.remove('on')}
+
+/* ===== VARIABLES POOL ===== */
+var VARS=['t','p','m','u','w','k','r','s','a','n'];
+function pickVar(){return VARS[ri(0,VARS.length-1)]}
+function pickTwoVars(){var i=ri(0,VARS.length-1);var j;do{j=ri(0,VARS.length-1)}while(j===i);return[VARS[i],VARS[j]]}
+
+/* ===== FORMATTING ===== */
+/* (v + k)² with sign handling */
+function sqStr(v,k){
+  if(k===0)return v+'²';
+  return'('+v+(k>0?' + '+k:' − '+Math.abs(k))+')²';
+}
+/* constant tail "+ q" */
+function tail(q){
+  if(q===0)return'';
+  return q>0?' + '+q:' − '+Math.abs(q);
+}
+/* expanded quadratic v² + bv + c */
+function expStr(v,b,c){
+  var s=v+'²';
+  if(b!==0)s+=b>0?' + '+(b===1?'':b)+v:' − '+(Math.abs(b)===1?'':Math.abs(b))+v;
+  if(c!==0)s+=c>0?' + '+c:' − '+Math.abs(c);
+  return s;
+}
+
+/* ===== AREA MODEL CANVAS ===== */
+/* Visualize v² + bv as: square (v×v) + two rectangles (v×b/2 each), missing corner (b/2)² */
+function drawAreaModel(v,b,detail){
+  var cv=document.getElementById('vCv');
+  var W=cv.parentElement.clientWidth-20,H=Math.round(W*.62);
+  var dpr=window.devicePixelRatio||2;
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+  var ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.fillStyle='#F0FCFF';ctx.fillRect(0,0,W,H);
+
+  var h=Math.abs(b)/2;
+  /* layout: big square side vLen, strip width hLen, scaled to fit */
+  var vLen=Math.min(W,H)*0.46;
+  var hLen=Math.max(vLen*0.32,28);
+  var total=vLen+hLen;
+  var ox=(W-total)/2, oy=(H-total)/2+8;
+
+  var hLabel=h===Math.floor(h)?String(h):String(b)+'/2';
+  var halfStr=(Math.abs(b)%2===0)?String(Math.abs(b)/2):Math.abs(b)+'/2';
+
+  /* v² square */
+  ctx.fillStyle='rgba(8,145,178,.16)';ctx.fillRect(ox,oy,vLen,vLen);
+  ctx.strokeStyle='#0891B2';ctx.lineWidth=2;ctx.strokeRect(ox,oy,vLen,vLen);
+  ctx.font='700 16px "JetBrains Mono"';ctx.fillStyle='#0E7490';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(v+'²',ox+vLen/2,oy+vLen/2);
+
+  /* right rectangle: v × b/2 */
+  ctx.fillStyle='rgba(194,65,12,.16)';ctx.fillRect(ox+vLen,oy,hLen,vLen);
+  ctx.strokeStyle='#C2410C';ctx.lineWidth=2;ctx.strokeRect(ox+vLen,oy,hLen,vLen);
+  ctx.font='700 12px "JetBrains Mono"';ctx.fillStyle='#C2410C';
+  ctx.save();ctx.translate(ox+vLen+hLen/2,oy+vLen/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('('+halfStr+')'+v,0,0);ctx.restore();
+
+  /* bottom rectangle: b/2 × v */
+  ctx.fillStyle='rgba(194,65,12,.16)';ctx.fillRect(ox,oy+vLen,vLen,hLen);
+  ctx.strokeStyle='#C2410C';ctx.strokeRect(ox,oy+vLen,vLen,hLen);
+  ctx.fillStyle='#C2410C';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('('+halfStr+')'+v,ox+vLen/2,oy+vLen+hLen/2);
+
+  /* missing corner: (b/2)² */
+  if(detail){
+    ctx.fillStyle='rgba(190,18,60,.22)';ctx.fillRect(ox+vLen,oy+vLen,hLen,hLen);
+    ctx.strokeStyle='#BE123C';ctx.setLineDash([]);ctx.lineWidth=2;ctx.strokeRect(ox+vLen,oy+vLen,hLen,hLen);
+    ctx.font='700 11px "JetBrains Mono"';ctx.fillStyle='#BE123C';
+    var cornStr=(Math.abs(b)%2===0)?String((Math.abs(b)/2)*(Math.abs(b)/2)):'('+halfStr+')²';
+    ctx.fillText(cornStr,ox+vLen+hLen/2,oy+vLen+hLen/2);
+    /* big bracket label */
+    ctx.font='700 12px "Space Grotesk"';ctx.fillStyle='#16A34A';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('补上这一角 → 完整正方形 ('+v+(b>0?'+':'−')+halfStr+')²',W/2,oy+total+8);
+  } else {
+    ctx.setLineDash([5,4]);ctx.strokeStyle='#BE123C';ctx.lineWidth=1.6;
+    ctx.strokeRect(ox+vLen,oy+vLen,hLen,hLen);ctx.setLineDash([]);
+    ctx.font='700 14px "JetBrains Mono"';ctx.fillStyle='#BE123C';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('?',ox+vLen+hLen/2,oy+vLen+hLen/2);
+    ctx.font='600 11px "Space Grotesk"';ctx.fillStyle='#64748B';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('缺了哪一块？',W/2,oy+total+8);
+  }
+  /* side length labels */
+  ctx.font='600 11px "JetBrains Mono"';ctx.fillStyle='#0E7490';ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText(v,ox+vLen/2,oy-4);
+  ctx.fillStyle='#C2410C';ctx.fillText(halfStr,ox+vLen+hLen/2,oy-4);
+}
+
+/* ===== HALF-SQUARE ANIMATION ===== */
+var hsTimer=null;
+function showHalfSquare(b){
+  var card=document.getElementById('hsCard');card.style.display='';
+  var halfDisp=(Math.abs(b)%2===0)?String(b/2):b+'/2';
+  var sqDisp=(Math.abs(b)%2===0)?String((b/2)*(b/2)):'('+b+'/2)²';
+  var flow=document.getElementById('hsFlow');
+  flow.innerHTML='<span class="hs-box hs-b" id="hsA">b = '+b+'</span>'+
+    '<span class="hs-arrow" id="hsR1">÷2 →</span>'+
+    '<span class="hs-box hs-half" id="hsB">'+halfDisp+'</span>'+
+    '<span class="hs-arrow" id="hsR2">平方 →</span>'+
+    '<span class="hs-box hs-sq" id="hsC">'+sqDisp+'</span>';
+  if(hsTimer)clearInterval(hsTimer);
+  var els=['hsA','hsR1','hsB','hsR2','hsC'].map(function(id){return document.getElementById(id)});
+  var idx=0;
+  hsTimer=setInterval(function(){if(idx<els.length){els[idx].classList.add('show');idx++}else{clearInterval(hsTimer);hsTimer=null}},300);
+}
+function hideHalfSquare(){document.getElementById('hsCard').style.display='none';if(hsTimer){clearInterval(hsTimer);hsTimer=null}}
+
+/* ===== STEPS ===== */
+var stepTimer=null;
+function showSteps(steps){
+  var panel=document.getElementById('stP');panel.style.display='';
+  var body=document.getElementById('stB');body.innerHTML='';
+  if(stepTimer)clearInterval(stepTimer);
+  steps.forEach(function(s,i){
+    var div=document.createElement('div');div.className='step-ln';
+    var isLast=i===steps.length-1;
+    div.innerHTML='<span class="step-num">'+(i+1)+'</span>'+(isLast?'<span class="step-ok">'+s+'</span>':s);
+    body.appendChild(div);
+  });
+  var lines=body.querySelectorAll('.step-ln');var idx=0;
+  stepTimer=setInterval(function(){if(idx<lines.length){lines[idx].classList.add('show');idx++}else{clearInterval(stepTimer);stepTimer=null}},300);
+}
+function hideSteps(){document.getElementById('stP').style.display='none';if(stepTimer){clearInterval(stepTimer);stepTimer=null}}
+
+/* ===== OPTION BUILDER ===== */
+function buildOpts4(correct,cands){
+  var pool=[correct];
+  cands.forEach(function(c){if(c&&pool.indexOf(c)<0&&pool.length<8)pool.push(c)});
+  /* top-up safety: tweak constants */
+  var guard=0;
+  while(pool.length<4&&guard<20){
+    guard++;
+    var tweak=correct.replace(/([+−]) (\d+)$/,function(m0,sg,num){var n2=parseInt(num)+guard;return sg+' '+n2});
+    if(tweak!==correct&&pool.indexOf(tweak)<0)pool.push(tweak);
+    else{var t2=correct+' + '+guard;if(pool.indexOf(t2)<0)pool.push(t2)}
+  }
+  var arr=pool.slice(1,4);
+  return shuf([correct].concat(arr));
+}
+
+/* ===== ZONE GENERATORS ===== */
+
+/* Zone 1: Recognize perfect squares — t²+6t+9 = (t+3)² */
+function genPerfect(l){
+  var v=pickVar();
+  var k=rnz(-6,6);
+  var b=2*k,c=k*k;
+  var expr=expStr(v,b,c);
+  var answer=sqStr(v,k);
+  /* distractors — all "(v±k)²" format */
+  var d1=sqStr(v,-k);
+  var d2=sqStr(v,b);       /* used b instead of b/2 */
+  var d3=sqStr(v,k+(k>0?1:-1));
+  var opts=buildOpts4(answer,[d1,d2,d3]);
+  var halfStr=String(b/2);
+  var steps=[
+    expr,
+    '检查：'+v+' 系数 = '+b+'，<span class="step-half">一半 = '+halfStr+'</span>',
+    '<span class="step-sq">('+halfStr+')² = '+(b/2)*(b/2)+'</span> — 恰好等于常数项 '+c+' ✓',
+    '这是完全平方式！',
+    expr+' = '+answer
+  ];
+  return{expr:expr,task:'这是完全平方式——写成平方形式',answer:answer,options:opts,steps:steps,
+    hint:'检验：常数项是否等于（一次项系数一半）的平方',
+    infoHint:'('+halfStr+')² = '+c+' ✓ → <strong>'+answer+'</strong>',
+    v:v,b:b,hasCanvas:true,hsB:b};
+}
+
+/* Zone 2: v² + bv (no constant) — the core "half, square, subtract" move */
+function genNoConst(l){
+  var v=pickVar();
+  var half=rnz(-6,6);
+  var b=2*half; /* keep even → integer */
+  var expr=expStr(v,b,0);
+  var answer=sqStr(v,half)+tail(-half*half);
+  /* distractors — same format "(v±k)² ± q" */
+  var d1=sqStr(v,half)+tail(half*half);       /* added instead of subtracted */
+  var d2=sqStr(v,b)+tail(-b*b);               /* used b not b/2 */
+  var d3=sqStr(v,-half)+tail(-half*half);     /* sign of k flipped */
+  var opts=buildOpts4(answer,[d1,d2,d3]);
+  var steps=[
+    expr,
+    '<span class="step-half">取一半：'+b+' ÷ 2 = '+half+'</span>',
+    '写成 ('+v+(half>0?' + '+half:' − '+Math.abs(half))+')² —— 但它展开多了 <span class="step-sq">'+half+'² = '+half*half+'</span>',
+    '所以要减去：'+sqStr(v,half)+' − '+half*half,
+    expr+' = '+answer
+  ];
+  return{expr:expr,task:'配方：写成 ('+v+' ± k)² ± q 形式',answer:answer,options:opts,steps:steps,
+    hint:'一半→平方→减去：(v + b/2)² − (b/2)²',
+    infoHint:'一半 = '+half+'，平方 = '+half*half+' → <strong>'+answer+'</strong>',
+    v:v,b:b,hasCanvas:true,hsB:b};
+}
+
+/* Zone 3: Full v² + bv + c */
+function genFull(l){
+  var v=pickVar();
+  var half=rnz(-5,5);
+  var b=2*half;
+  var c=rnz(-9,9);
+  var q=c-half*half;
+  var expr=expStr(v,b,c);
+  var answer=sqStr(v,half)+tail(q);
+  var d1=sqStr(v,half)+tail(c+half*half);   /* added (b/2)² instead of subtracting */
+  var d2=sqStr(v,half)+tail(c);             /* forgot to subtract (b/2)² entirely */
+  var d3=sqStr(v,-half)+tail(q);            /* sign of k flipped */
+  var opts=buildOpts4(answer,[d1,d2,d3]);
+  var steps=[
+    expr,
+    '<span class="step-half">一半：'+b+' ÷ 2 = '+half+'</span>，<span class="step-sq">平方 = '+half*half+'</span>',
+    '= '+sqStr(v,half)+' − '+half*half+(c>=0?' + '+c:' − '+Math.abs(c)),
+    '合并常数：−'+half*half+(c>=0?' + '+c:' − '+Math.abs(c))+' = '+q,
+    expr+' = '+answer
+  ];
+  return{expr:expr,task:'配方：写成 ('+v+' ± k)² ± q 形式',answer:answer,options:opts,steps:steps,
+    hint:'(v + b/2)² − (b/2)² + c，最后合并常数项',
+    infoHint:'一半='+half+'，平方='+half*half+'，合并常数 → <strong>'+answer+'</strong>',
+    v:v,b:b,hasCanvas:true,hsB:b};
+}
+
+/* Zone 4: Find min/max value & where — bridge to vertex form */
+function genVertex(l){
+  var v=pickVar();
+  var half=rnz(-5,5);
+  var b=2*half,c=rnz(-8,8);
+  var q=c-half*half;
+  var expr=expStr(v,b,c);
+  var sub=ri(0,1);
+  if(sub===0){
+    /* minimum value */
+    var answer='最小值 = '+q+'，当 '+v+' = '+(-half);
+    var d1='最小值 = '+q+'，当 '+v+' = '+half;       /* sign error on location */
+    var d2='最小值 = '+c+'，当 '+v+' = '+(-half);    /* used original c */
+    var d3='最小值 = '+(q+ri(1,3))+'，当 '+v+' = '+(-half);
+    var opts=buildOpts4(answer,[d1,d2,d3]);
+    var steps=[
+      expr+' = '+sqStr(v,half)+tail(q),
+      '平方项 '+sqStr(v,half)+' ≥ 0，最小为 0',
+      '当 '+v+(half>0?' + '+half:' − '+Math.abs(half))+' = 0，即 <span class="step-half">'+v+' = '+(-half)+'</span>',
+      '此时整个式子 = 0'+tail(q)+' = '+q,
+      answer
+    ];
+    return{expr:expr,task:'配方后求最小值及其位置',answer:answer,options:opts,steps:steps,
+      hint:'配方后：平方项最小为0（v = −k 时），最小值就是常数 q',
+      infoHint:sqStr(v,half)+tail(q)+' → 最小值 <strong>'+q+'</strong>（'+v+'='+(-half)+'）',
+      v:v,b:b,hasCanvas:false,hsB:b};
+  } else {
+    /* just identify completed form, then read off vertex-style info */
+    var answer2=sqStr(v,half)+tail(q);
+    var d12=sqStr(v,-half)+tail(q);
+    var d22=sqStr(v,half)+tail(c);
+    var d32=sqStr(v,half)+tail(q+(q>=0?2:-2));
+    var opts2=buildOpts4(answer2,[d12,d22,d32]);
+    var steps2=[
+      expr,
+      '<span class="step-half">一半 = '+half+'</span>，<span class="step-sq">平方 = '+half*half+'</span>',
+      '= '+sqStr(v,half)+' − '+half*half+tail(c).replace(/^ /,' '),
+      expr+' = '+answer2,
+      '（这就是二次函数顶点式的核心结构）'
+    ];
+    return{expr:expr,task:'配方（为顶点式打基础）',answer:answer2,options:opts2,steps:steps2,
+      hint:'(v+k)²+q 中：−k 是对称轴位置，q 是最值',
+      infoHint:'配方 → <strong>'+answer2+'</strong>',
+      v:v,b:b,hasCanvas:true,hsB:b};
+  }
+}
+
+/* Zone 5: Two-variable — circle prep: x²+y²+2gx+2fy(+c) */
+function genTwoVar(l){
+  var pair=pickTwoVars();var v1=pair[0],v2=pair[1];
+  var h1=rnz(-4,4),h2=rnz(-4,4);
+  var b1=2*h1,b2=2*h2;
+  var c=l<3?0:ri(-6,6);
+  /* expr: v1² + b1·v1 + v2² + b2·v2 (+c) */
+  var e1=expStr(v1,b1,0);
+  var e2=expStr(v2,b2,0);
+  var expr=e1+' + '+e2+(c!==0?(c>0?' + '+c:' − '+Math.abs(c)):'');
+  var q=-h1*h1-h2*h2+c;
+  var answer=sqStr(v1,h1)+' + '+sqStr(v2,h2)+tail(q);
+  var d1=sqStr(v1,-h1)+' + '+sqStr(v2,-h2)+tail(q);                /* both signs flipped */
+  var d2=sqStr(v1,h1)+' + '+sqStr(v2,h2)+tail(c);                  /* forgot subtractions */
+  var d3=sqStr(v1,h1)+' + '+sqStr(v2,h2)+tail(-h1*h1-h2*h2-c);     /* sign of c wrong */
+  var d4=sqStr(v1,h2)+' + '+sqStr(v2,h1)+tail(q);                  /* swapped halves */
+  var opts=buildOpts4(answer,[d1,d2,d3,d4]);
+  var steps=[
+    expr,
+    '对 '+v1+' 配方：<span class="step-half">一半='+h1+'</span> → '+sqStr(v1,h1)+' − '+h1*h1,
+    '对 '+v2+' 配方：<span class="step-half">一半='+h2+'</span> → '+sqStr(v2,h2)+' − '+h2*h2,
+    '合并常数：−'+h1*h1+' − '+h2*h2+(c!==0?(c>0?' + '+c:' − '+Math.abs(c)):'')+' = '+q,
+    expr+' = '+answer,
+    '（这正是圆方程化为标准式的方法）'
+  ];
+  return{expr:expr,task:'对两个变量分别配方（圆方程预备）',answer:answer,options:opts,steps:steps,
+    hint:'每个变量独立配方：各取一半、平方、减去，最后合并所有常数',
+    infoHint:v1+': 一半'+h1+'；'+v2+': 一半'+h2+' → <strong>'+answer+'</strong>',
+    v:v1,b:b1,hasCanvas:false,hsB:null};
+}
+
+/* ===== ZONES ===== */
+var ZONES=[
+  {id:'pf',name:'识别完全平方式',desc:'t²+6t+9 = (t+3)² — 验证常数项',
+    color:'#0E7490',bg:'#CFFAFE',icon:'a²+2ab\n+b²',levels:6,gen:genPerfect},
+  {id:'nc',name:'配方核心 v²+bv',desc:'一半→平方→减去',
+    color:'#C2410C',bg:'#FFF7ED',icon:'v²+bv\n→(…)²',levels:7,gen:genNoConst},
+  {id:'fl',name:'完整配方 v²+bv+c',desc:'配方后合并常数项',
+    color:'#6D28D9',bg:'#EDE9FE',icon:'+c\n合并',levels:7,gen:genFull},
+  {id:'vx',name:'最值与顶点式预备',desc:'配方后读出最小值和位置',
+    color:'#1D4ED8',bg:'#EFF6FF',icon:'min\n(−k,q)',levels:6,gen:genVertex},
+  {id:'tv',name:'双变量配方（圆预备）',desc:'p²+4p+w²−6w → 两个平方',
+    color:'#BE123C',bg:'#FFF1F3',icon:'x²+y²\n→圆',levels:7,gen:genTwoVar},
+  {id:'mix',name:'综合配方挑战',desc:'全类型混合',
+    color:'#B45309',bg:'#FEF3C7',icon:'ALL',levels:8,gen:function(l){return ZONES[ri(0,4)].gen(l)}}
+];
+
+var QPL=5;
+var CHEERS=['太棒了！配方法已被你完全掌握！','完美！一半→平方→减去——已成本能！','了不起！任何字母都难不倒你！','每一题都让你更强！','双变量配方你都会了——圆的标准式不在话下！','继续前进！','顶点式和圆方程的基础已经打牢！','(v+b/2)²−(b/2)²——你永远不会忘记！'];
+var OK_W=['正确!','太棒了!','完美!','漂亮!','没错!','好厉害!','Correct!','Well done!'];
+
+var st=loadS();
+function defS(){return{zones:ZONES.map(function(z){return{id:z.id,levels:Array(z.levels).fill(0)}}),total:0}}
+function loadS(){try{var s=JSON.parse(localStorage.getItem('ctsStudio'));if(s&&s.zones)return s}catch(e){}return defS()}
+function saveS(){st.total=st.zones.reduce(function(a,z){return a+z.levels.reduce(function(s,v){return s+v},0)},0);localStorage.setItem('ctsStudio',JSON.stringify(st))}
+var cZ=0,cL=0,qs=[],qi=0,correct=0,streak=0,maxSk=0,attempts=0,answered=false;
+function genQs(z,l){var q=[];for(var i=0;i<QPL;i++)q.push(z.gen(l));return q}
+
+function renderMap(){
+  var list=document.getElementById('mL');list.innerHTML='';
+  document.getElementById('allSt').textContent=st.total;
+  ZONES.forEach(function(z,zi){
+    var zs=st.zones[zi],done=zs.levels.filter(function(v){return v>0}).length;
+    var zStars=zs.levels.reduce(function(a,v){return a+v},0);
+    var prevOk=zi===0||st.zones[zi-1].levels.filter(function(v){return v>0}).length>=Math.ceil(ZONES[zi-1].levels*.5);
+    var unlocked=prevOk,complete=done===z.levels,current=unlocked&&!complete;
+    var card=document.createElement('div');
+    card.className='zc'+(unlocked?'':' lk')+(complete?' dn':'')+(current?' nw':'');
+    card.innerHTML='<div class="zi" style="background:'+z.bg+';color:'+z.color+'">'+z.icon+'</div><div class="zb"><div class="zn" style="color:'+(unlocked?z.color:'#999')+'">'+z.name+'</div><div class="zd">'+(unlocked?z.desc:'完成前面的区域解锁')+'</div><div class="zdots">'+zs.levels.map(function(v,li){return'<div class="zdt'+(v>0?' on':'')+((! v&&(li===0||zs.levels[li-1]>0))?' cu':'')+'"></div>'}).join('')+'</div></div><div class="zr"><div class="zsv">'+zStars+'/'+z.levels*3+'</div></div>';
+    if(unlocked)card.onclick=(function(i){return function(){openZ(i)}})(zi);
+    list.appendChild(card);
+  });
+}
+function openZ(zi){cZ=zi;var zs=st.zones[zi],l=zs.levels.findIndex(function(v){return v===0});if(l===-1)l=0;startLvl(l)}
+
+function startLvl(l){
+  cL=l;qi=0;correct=0;streak=0;maxSk=0;attempts=0;answered=false;
+  var z=ZONES[cZ];qs=genQs(z,l);
+  document.getElementById('ghZ').textContent=z.name;
+  document.getElementById('ghZ').style.color=z.color;
+  document.getElementById('ghL').textContent='Level '+(l+1);
+  show('scnG');renderQ();
+}
+
+function renderQ(){
+  answered=false;hideSteps();hideHalfSquare();
+  var q=qs[qi];
+  var dots=document.getElementById('gDs');dots.innerHTML='';
+  for(var i=0;i<QPL;i++){var d=document.createElement('div');d.className='gd'+(i<qi?' done':'')+(i===qi?' act':'');dots.appendChild(d)}
+  document.getElementById('qLbl').textContent=ZONES[cZ].name.toUpperCase();
+  document.getElementById('qExpr').textContent=q.expr;
+  document.getElementById('qTask').textContent=q.task;
+  var vw=document.getElementById('visWrap');
+  if(q.hasCanvas){vw.style.display='';drawAreaModel(q.v,q.b,false);document.getElementById('visCap').textContent='面积模型：缺了哪一块才是完整正方形？'}
+  else vw.style.display='none';
+  document.getElementById('iTxt').innerHTML='分析表达式，选出正确答案…';
+  document.getElementById('gHint').textContent='';
+  var og=document.getElementById('optsG');og.innerHTML='';
+  var longest=Math.max.apply(null,q.options.map(function(o){return o.length}));
+  og.className=longest>22?'opts s1':'opts';
+  q.options.forEach(function(opt){
+    var btn=document.createElement('button');btn.className='ob';btn.textContent=opt;
+    btn.onclick=function(){handleAns(opt,q,btn)};og.appendChild(btn);
+  });
+  updStrk();
+}
+
+function handleAns(chosen,q,btn){
+  if(answered)return;attempts++;
+  if(chosen===q.answer){
+    answered=true;correct++;streak++;if(streak>maxSk)maxSk=streak;
+    btn.classList.add('ok');
+    document.querySelectorAll('.ob').forEach(function(b){if(!b.classList.contains('ok'))b.classList.add('off')});
+    if(q.hasCanvas){drawAreaModel(q.v,q.b,true);document.getElementById('visCap').textContent='补上 (b/2)² 这一角，就成了完整正方形'}
+    if(q.hsB!==null&&q.hsB!==undefined)showHalfSquare(q.hsB);
+    showSteps(q.steps);
+    document.getElementById('iTxt').innerHTML=q.infoHint;
+    var r=btn.getBoundingClientRect();
+    burst(r.left+r.width/2,r.top+r.height/2,streak>=3?26:14);
+    showCk();updStrk();
+    document.getElementById('gHint').textContent=OK_W[ri(0,OK_W.length-1)];
+    document.getElementById('gHint').style.color='#16A34A';
+    setTimeout(function(){qi++;if(qi>=QPL)finishLvl();else renderQ()},Math.max(2600,q.steps.length*300+900));
+  } else {
+    streak=0;updStrk();btn.classList.add('nope');
+    if(q.hasCanvas){drawAreaModel(q.v,q.b,true);document.getElementById('visCap').textContent='补上 (b/2)² 这一角，就成了完整正方形'}
+    if(q.hsB!==null&&q.hsB!==undefined)showHalfSquare(q.hsB);
+    showSteps(q.steps);
+    document.getElementById('iTxt').innerHTML=q.infoHint;
+    document.getElementById('gHint').textContent='💡 '+q.hint;
+    document.getElementById('gHint').style.color='#0E7490';
+  }
+}
+
+function finishLvl(){
+  hideSteps();hideHalfSquare();
+  var stars;if(attempts<=QPL)stars=3;else if(attempts<=QPL+2)stars=2;else stars=1;
+  var prev=st.zones[cZ].levels[cL];if(stars>prev){st.zones[cZ].levels[cL]=stars;saveS()}
+  var starsEl=document.getElementById('rsSt');starsEl.innerHTML='';
+  for(var i=0;i<3;i++){var s=document.createElement('div');s.className='rs'+(i<stars?' got':'');s.innerHTML='<svg viewBox="0 0 24 24" fill="'+(i<stars?'#FBBF24':'#CBD5E1')+'"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';starsEl.appendChild(s)}
+  document.getElementById('rsT').textContent=['做到了！','太棒了！','完美通关！'][Math.min(stars-1,2)];
+  document.getElementById('rsMsg').textContent=CHEERS[ri(0,CHEERS.length-1)];
+  document.getElementById('rvO').textContent=correct+'/'+QPL;
+  document.getElementById('rvS').textContent=maxSk;
+  var hasNext=cL+1<ZONES[cZ].levels;var btn=document.getElementById('btnN');
+  btn.textContent=hasNext?'继续配方':'返回地图';btn.onclick=hasNext?goNxt:toMap;
+  show('scnR');setTimeout(function(){burst(window.innerWidth/2,window.innerHeight/3,30)},500);
+}
+function goNxt(){if(cL+1<ZONES[cZ].levels)startLvl(cL+1);else toMap()}
+function enterMap(){show('scnM');renderMap()}
+function toMap(){hideSteps();hideHalfSquare();show('scnM');renderMap()}
+saveS();
+</script>
+</body>
+</html>
